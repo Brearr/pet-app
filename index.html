@@ -530,6 +530,15 @@
   .storage-bar { height: 10px; background: #eadfce; border-radius: 5px; overflow: hidden; margin: 8px 0; }
   #storageBarFill { height: 100%; width: 0; background: #d98f4e; border-radius: 5px; }
   #storageBarFill.warn { background: #c0563f; }
+
+  /* ================= 步骤 4.12 新增样式（单次提醒） ================= */
+
+  /* 快捷日期按钮：明天、3 天后…… */
+  .chip-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .chip { font-size: 15px; padding: 8px 12px; min-height: 44px; background: #efe5d6; color: #4a4036; }
+
+  /* 已完成的单次提醒：名字划掉 */
+  .todo-done-name { text-decoration: line-through; color: #8a7d6e; }
 </style>
 </head>
 <body>
@@ -788,8 +797,6 @@
       <div id="itemFormTitle" class="modal-title"></div>
       <label for="itemName">项目名称 <span class="req">*必填</span></label>
       <input type="text" id="itemName" maxlength="20">
-      <label for="itemLast">上次日期（选填）</label>
-      <input type="date" id="itemLast">
       <label for="itemCycle">周期</label>
       <select id="itemCycle">
         <option value="1">每 1 个月</option>
@@ -797,8 +804,18 @@
         <option value="3">每 3 个月</option>
         <option value="6">每 6 个月</option>
         <option value="12">每 12 个月</option>
-        <option value="0">不循环，只记日期</option>
+        <option value="0">单次</option>
       </select>
+      <label id="itemLastLabel" for="itemLast">上次日期（选填）</label>
+      <input type="date" id="itemLast">
+      <div id="itemChips" class="chip-row" hidden>
+        <button type="button" class="chip" data-days="1">明天</button>
+        <button type="button" class="chip" data-days="3">3 天后</button>
+        <button type="button" class="chip" data-days="7">一周后</button>
+        <button type="button" class="chip" data-days="10">10 天后</button>
+        <button type="button" class="chip" data-months="1">一个月后</button>
+      </div>
+      <div id="itemDateHint" class="hint" style="margin:8px 0 0" hidden></div>
       <div id="itemError" class="error" hidden></div>
       <div class="btn-row">
         <button type="submit" class="btn-main">💾 保存</button>
@@ -1211,6 +1228,8 @@
     // 步骤 2：提醒项一并清除
     try { localStorage.removeItem(REMINDER_KEY); } catch (e) {}
     reminders = null;
+    // 步骤 4.12：以前那版"一次性待办"留下的数据（如果还在）也一并清除
+    try { localStorage.removeItem(TODO_KEY); } catch (e) {}
     // 步骤 3：开销记录一并清除
     try { localStorage.removeItem(EXPENSE_KEY); } catch (e) {}
     expenses = [];
@@ -1372,9 +1391,9 @@
 
   function defaultReminders() {
     return [
-      { id: newId(), name: "💉 疫苗", lastDate: "", cycle: 12 },
-      { id: newId(), name: "💊 驱虫", lastDate: "", cycle: 3 },
-      { id: newId(), name: "🩺 体检", lastDate: "", cycle: 12 }
+      { id: newId(), name: "💉 疫苗", lastDate: "", cycle: 12, done: false, doneDate: "" },
+      { id: newId(), name: "💊 驱虫", lastDate: "", cycle: 3, done: false, doneDate: "" },
+      { id: newId(), name: "🩺 体检", lastDate: "", cycle: 12, done: false, doneDate: "" }
     ];
   }
 
@@ -1395,11 +1414,17 @@
         var r = arr[i];
         if (!r || typeof r.name !== "string") { corrupt.reminders = true; continue; }
         var c = Number(r.cycle);
+        var cyc = CYCLE_OPTIONS.indexOf(c) >= 0 ? c : 0;
+        // 步骤 4.12：只有"单次"才有"完成与否"。以前存的"不循环，只记日期"没有这个记号，当作已经完成的记录
+        var dn = cyc === 0 ? (r.done === undefined ? true : r.done === true) : false;
+        var ddt = (dn && typeof r.doneDate === "string" && parseDate(r.doneDate)) ? r.doneDate : "";
         out.push({
           id: String(r.id || newId()),
           name: r.name,
           lastDate: typeof r.lastDate === "string" ? r.lastDate : "",
-          cycle: CYCLE_OPTIONS.indexOf(c) >= 0 ? c : 0
+          cycle: cyc,
+          done: dn,
+          doneDate: ddt
         });
       }
       return out;
@@ -1464,15 +1489,23 @@
   }
 
   function cycleLabel(c) {
-    return c ? "每 " + c + " 个月" : "不循环，只记日期";
+    return c ? "每 " + c + " 个月" : "单次";
   }
 
   // 算一个提醒项的状态
-  // kind：unfilled 未填写 / noloop 不循环 / overdue 已过期 / soon 30天内 / normal 正常
+  // kind：unfilled 未填写 / done 单次已完成 / overdue 已过期 / soon 30天内 / normal 正常
+  // 周期项目：下次日期 = 上次日期 + 周期；单次：日期就是那一天（没完成的才会过期、提醒）
   function getItemStatus(item) {
     var p = parseDate(item.lastDate);
     if (!p) return { kind: "unfilled" };
-    if (!item.cycle) return { kind: "noloop" };
+    if (!item.cycle) {
+      if (item.done) return { kind: "done" };
+      var sdiff = dateNum(p.y, p.m, p.d) - todayNum();
+      if (sdiff < 0) return { kind: "overdue", days: -sdiff, next: item.lastDate, text: "已过期 " + (-sdiff) + " 天" };
+      if (sdiff === 0) return { kind: "soon", days: 0, next: item.lastDate, text: "就是今天" };
+      if (sdiff <= 30) return { kind: "soon", days: sdiff, next: item.lastDate, text: "还有 " + sdiff + " 天" };
+      return { kind: "normal", days: sdiff, next: item.lastDate, text: "还有 " + sdiff + " 天" };
+    }
     var next = addMonths(p, item.cycle);
     var nextStr = fmtDate(next.y, next.m, next.d);
     var diff = dateNum(next.y, next.m, next.d) - todayNum();
@@ -1522,9 +1555,9 @@
       var r = reminders[i];
       var st = getItemStatus(r);
       if (st.kind === "overdue") {
-        list.push({ rank: 0, sort: -st.days, name: r.name, color: "red", text: st.text, id: r.id });
+        list.push({ rank: 0, sort: -st.days, name: r.name, color: "red", text: st.text, id: r.id, single: !r.cycle });
       } else if (st.kind === "soon") {
-        list.push({ rank: 1, sort: st.days, name: r.name, color: "yellow", text: st.text, id: r.id });
+        list.push({ rank: 1, sort: st.days, name: r.name, color: "yellow", text: st.text, id: r.id, single: !r.cycle });
       }
     }
 
@@ -1611,9 +1644,12 @@
       row.appendChild(left);
 
       if (n.id) {   // 生日没有「已处理」按钮
-        var btn = el("button", "btn-soft handled-btn", "✅ 已处理");
+        var btn = el("button", "btn-soft handled-btn", n.single ? "✅ 完成" : "✅ 已处理");
         btn.type = "button";
-        btn.addEventListener("click", function () { openHandle(n.id); });
+        btn.addEventListener("click", function () {
+          if (n.single) completeItem(n.id);   // 步骤 4.12：单次，点一下就算完成
+          else openHandle(n.id);              // 周期项目：填新的上次日期
+        });
         row.appendChild(btn);
       }
       box.appendChild(row);
@@ -1627,7 +1663,10 @@
     var b = getBirthdayStatus();
     if (b) box.appendChild(buildBirthdayRow(b));
 
-    reminders.forEach(function (r) {
+    // 步骤 4.12：已经完成的单次放在最下面，免得挤占前面的位置
+    var activeItems = reminders.filter(function (r) { return !(r.cycle === 0 && r.done); });
+    var doneItems = reminders.filter(function (r) { return r.cycle === 0 && r.done; });
+    activeItems.concat(doneItems).forEach(function (r) {
       box.appendChild(buildItemRow(r));
     });
 
@@ -1659,6 +1698,7 @@
   }
 
   function buildItemRow(r) {
+    if (!r.cycle) return buildSingleRow(r);   // 步骤 4.12：单次的，样子不一样
     var st = getItemStatus(r);
     var row = el("div", "item");
     row.appendChild(el("div", "item-name", r.name));
@@ -1764,7 +1804,6 @@
   function openItemForm(id) {
     editingId = id || null;
     itemError.hidden = true;
-    itemLast.max = todayString();
     if (id) {
       var item = findItem(id);
       if (!item) return;
@@ -1778,6 +1817,7 @@
       itemLast.value = "";
       itemCycle.value = "12";
     }
+    updateItemFormMode();   // 步骤 4.12：根据是不是"单次"，调整日期那一栏
     showModal("item");
   }
 
@@ -1792,26 +1832,45 @@
     var name = itemName.value.trim();
     if (!name) { showItemError("请填写项目名称。"); itemName.focus(); return; }
     var last = itemLast.value;
-    if (last && last > todayString()) { showItemError("上次日期不能晚于今天。"); return; }
     var cycle = Number(itemCycle.value);
+    if (cycle === 0) {
+      // 步骤 4.12：单次：日期必填，过去、未来都可以选
+      if (!parseDate(last)) { showItemError("请选择日期。"); return; }
+    } else if (last && last > todayString()) {
+      showItemError("上次日期不能晚于今天。");
+      return;
+    }
     var savedId = editingId;   // 步骤 4.5：记下保存的是哪一项
 
     if (editingId) {
       var item = findItem(editingId);
       if (!item) { closeModal(); renderReminders(); return; }
       var oldName = item.name, oldLast = item.lastDate, oldCycle = item.cycle;
+      var oldDone = item.done, oldDoneDate = item.doneDate;
+      var sameSingle = (oldCycle === 0 && cycle === 0 && oldLast === last);   // 单次、日期没改：保持原来的完成状态
       item.name = name;
       item.lastDate = last;
       item.cycle = cycle;
+      if (cycle !== 0) {
+        item.done = false;
+        item.doneDate = "";
+      } else if (!sameSingle) {
+        // 日期改了：选的是过去 = 已经发生的记录（算完成）；今天或以后 = 还没做的待办
+        item.done = last < todayString();
+        item.doneDate = item.done ? last : "";
+      }
       if (!saveReminders()) {
         item.name = oldName;
         item.lastDate = oldLast;
         item.cycle = oldCycle;
+        item.done = oldDone;
+        item.doneDate = oldDoneDate;
         showItemError("保存失败：浏览器存储空间可能已满，或浏览器禁用了本地存储。");
         return;
       }
     } else {
-      var newRec = { id: newId(), name: name, lastDate: last, cycle: cycle };
+      var newDone = (cycle === 0 && last < todayString());   // 单次选了过去的日期 = 已经发生的记录
+      var newRec = { id: newId(), name: name, lastDate: last, cycle: cycle, done: newDone, doneDate: newDone ? last : "" };
       reminders.push(newRec);
       if (!saveReminders()) {
         reminders.pop();
@@ -1843,6 +1902,180 @@
       return;
     }
     renderReminders();
+  }
+
+  // =====================================================
+  //   步骤 4.12：单次（不循环的提醒，比如 10 天后去剪指甲）
+  // =====================================================
+  //
+  // 和周期项目放在同一个列表里。区别只有一点：周期项目是"上次日期 + 周期"算出下一次；
+  // 单次是你直接选那一天（过去、未来都可以）。
+  //   选的日期是今天或以后 = 还没做的待办：快到了会出现在最上面的"待办提醒"里，做完点"完成"；
+  //   选的日期是过去 = 已经发生的记录，直接算"已完成"，不会提醒。
+
+  var TODO_KEY = "petTodos_v1";   // 以前有过一版单独的"一次性待办"存在这里；现在合并进来了，启动时会自动搬过来
+
+  var WEEKDAY_NAMES = ["日", "一", "二", "三", "四", "五", "六"];
+
+  function weekdayOf(dateStr) {
+    var p = parseDate(dateStr);
+    if (!p) return "";
+    return WEEKDAY_NAMES[new Date(Date.UTC(p.y, p.m - 1, p.d)).getUTCDay()];
+  }
+
+  // 从今天往后数 n 天（按本地日期）
+  function addDaysStr(n) {
+    var p = parseDate(todayString());
+    var dt = new Date(Date.UTC(p.y, p.m - 1, p.d + n));
+    return fmtDate(dt.getUTCFullYear(), dt.getUTCMonth() + 1, dt.getUTCDate());
+  }
+
+  // 从今天往后数 n 个月（月末取当月最后一天，和周期项目的规则一致）
+  function addMonthsStr(n) {
+    var r = addMonths(parseDate(todayString()), n);
+    return fmtDate(r.y, r.m, r.d);
+  }
+
+  function buildSingleRow(r) {
+    var st = getItemStatus(r);
+    var row = el("div", "item");
+    row.appendChild(el("div", "item-name" + (r.done ? " todo-done-name" : ""), r.name));
+
+    var p = parseDate(r.lastDate);
+    row.appendChild(el("div", "item-line", p ? "日期：" + r.lastDate + "（周" + weekdayOf(r.lastDate) + "）" : "日期：未填写"));
+    row.appendChild(el("div", "item-line", "周期：" + cycleLabel(0)));
+
+    if (st.kind === "done") {
+      var dtext = "✅ 已完成";
+      if (r.doneDate && r.doneDate !== r.lastDate) dtext += "（完成于 " + r.doneDate + "）";
+      row.appendChild(el("div", "item-line", dtext));
+    } else if (st.kind === "overdue") {
+      row.appendChild(el("span", "tag tag-red", st.text));
+    } else if (st.kind === "soon") {
+      row.appendChild(el("span", "tag tag-yellow", st.text));
+    } else if (st.kind === "normal") {
+      row.appendChild(el("div", "item-line", st.text));
+    }
+
+    // 📅 加到日历（已过期的置灰，提示先改日期；已完成的也置灰）
+    var calRow = el("div", "cal-row");
+    var calBtn = el("button", "btn-soft cal-btn", "📅 加到日历");
+    calBtn.type = "button";
+    if (canExportItem(r)) {
+      calBtn.addEventListener("click", function () { openCalDialog({ type: "item", id: r.id }); });
+    } else {
+      calBtn.disabled = true;
+    }
+    calRow.appendChild(calBtn);
+    if (st.kind === "overdue") calRow.appendChild(el("span", "cal-small", "请先修改日期"));
+    row.appendChild(calRow);
+
+    var btns = el("div", "item-btns");
+    if (st.kind === "done") {
+      var backBtn = el("button", "btn-soft", "↩️ 恢复");
+      backBtn.type = "button";
+      backBtn.addEventListener("click", function () { restoreItem(r.id); });
+      btns.appendChild(backBtn);
+    } else if (st.kind !== "unfilled") {
+      var okBtn = el("button", "btn-soft", "✅ 完成");
+      okBtn.type = "button";
+      okBtn.addEventListener("click", function () { completeItem(r.id); });
+      btns.appendChild(okBtn);
+    }
+    var editBtn = el("button", "btn-soft", "✏️ 编辑");
+    editBtn.type = "button";
+    editBtn.addEventListener("click", function () { openItemForm(r.id); });
+    var delBtn = el("button", "btn-danger", "🗑️ 删除");
+    delBtn.type = "button";
+    delBtn.addEventListener("click", function () { deleteItem(r.id); });
+    btns.appendChild(editBtn);
+    btns.appendChild(delBtn);
+    row.appendChild(btns);
+    return row;
+  }
+
+  // 单次：点"完成"
+  function completeItem(id) {
+    var item = findItem(id);
+    if (!item || item.cycle !== 0 || item.done) return;
+    item.done = true;
+    item.doneDate = todayString();
+    if (!saveReminders()) {
+      item.done = false;
+      item.doneDate = "";
+      alert("保存失败：浏览器存储空间可能已满，或浏览器禁用了本地存储。");
+      return;
+    }
+    renderReminders();
+  }
+
+  // 单次：点"恢复"（点错了完成，可以撤回；如果日期已经过了，会变成"已过期"）
+  function restoreItem(id) {
+    var item = findItem(id);
+    if (!item || item.cycle !== 0 || !item.done) return;
+    var oldDoneDate = item.doneDate;
+    item.done = false;
+    item.doneDate = "";
+    if (!saveReminders()) {
+      item.done = true;
+      item.doneDate = oldDoneDate;
+      alert("保存失败：浏览器存储空间可能已满，或浏览器禁用了本地存储。");
+      return;
+    }
+    renderReminders();
+  }
+
+  // 新增/编辑表单：选"单次"时，日期那一栏变成"日期（过去或未来都可以）"，并出现快捷按钮
+  function updateItemDateHint() {
+    var box = document.getElementById("itemDateHint");
+    if (Number(itemCycle.value) !== 0) return;
+    var v = itemLast.value;
+    var p = parseDate(v);
+    if (!p) {
+      box.textContent = "请选择日期，或点上面的快捷按钮。";
+      return;
+    }
+    var diff = dateNum(p.y, p.m, p.d) - todayNum();
+    var s = v + "，周" + weekdayOf(v) + "，";
+    if (diff === 0) {
+      s += "就是今天";
+    } else if (diff > 0) {
+      s += "还有 " + diff + " 天";
+    } else {
+      var orig = editingId ? findItem(editingId) : null;
+      if (orig && orig.cycle === 0 && orig.lastDate === v) {
+        s += (orig.done ? "已过去 " : "已过期 ") + (-diff) + " 天";   // 没改日期：保持原来的状态
+      } else {
+        s += "已过去 " + (-diff) + " 天（会记为已完成）";
+      }
+    }
+    box.textContent = s;
+  }
+
+  function updateItemFormMode() {
+    var single = Number(itemCycle.value) === 0;
+    document.getElementById("itemLastLabel").textContent = single ? "日期（过去或未来都可以）" : "上次日期（选填）";
+    if (single) itemLast.removeAttribute("max");   // 单次：过去、未来都能选
+    else itemLast.max = todayString();             // 周期项目的"上次日期"不能晚于今天
+    document.getElementById("itemChips").hidden = !single;
+    document.getElementById("itemDateHint").hidden = !single;
+    updateItemDateHint();
+  }
+
+  itemCycle.addEventListener("change", updateItemFormMode);
+  itemLast.addEventListener("input", updateItemDateHint);
+  itemLast.addEventListener("change", updateItemDateHint);
+
+  // 快捷按钮：明天、3 天后、一周后、10 天后、一个月后
+  var itemChips = document.querySelectorAll("#itemChips .chip");
+  for (var ici = 0; ici < itemChips.length; ici++) {
+    itemChips[ici].addEventListener("click", function () {
+      var days = this.getAttribute("data-days");
+      var months = this.getAttribute("data-months");
+      itemLast.value = days ? addDaysStr(Number(days)) : addMonthsStr(Number(months));
+      itemError.hidden = true;
+      updateItemDateHint();
+    });
   }
 
   // ---------- 底部导航切换（步骤 4.2：从四个标签改成五个标签） ----------
@@ -3541,7 +3774,8 @@
       uid: "pet-item-" + String(item.id).replace(/[^A-Za-z0-9_-]/g, "") + "@pet-profile.local",
       date: nd,
       days: st.days,
-      summary: pet.name + " " + cleanItemName(item.name) + "到期",
+      summary: pet.name + " " + cleanItemName(item.name) + (item.cycle ? "到期" : ""),   // 步骤 4.12：单次的标题是"宠物名 待办名"
+      single: !item.cycle,
       rrule: ""   // 普通项目只导出这一次，不重复
     };
   }
@@ -3646,7 +3880,7 @@
     var ev = buildCalEvent(ctx);
     if (!ev) return;   // 不能导出的，不弹框
     calCtx = ctx;
-    calText.textContent = "要把下次日期（" + ev.date.m + " 月 " + ev.date.d + " 日）加到手机日历吗？";
+    calText.textContent = "要把" + (ev.single ? "待办日期（" : "下次日期（") + ev.date.m + " 月 " + ev.date.d + " 日）加到手机日历吗？";
     calOldHint.hidden = !hasExported(calKey(ctx));   // 之前导出过，就多提示一句
     calWechat.hidden = true;
     calError.hidden = true;
@@ -3678,7 +3912,10 @@
 
     var ev = buildCalEvent(calCtx);
     if (!ev) {
-      showCalError("这一项现在不能加到日历（可能已过期），请先更新上次日期。");
+      var calItem = calCtx.type === "item" ? findItem(calCtx.id) : null;
+      showCalError(calItem && !calItem.cycle
+        ? "这一项现在不能加到日历（可能已过期或已完成）。"
+        : "这一项现在不能加到日历（可能已过期），请先更新上次日期。");
       return;
     }
     try {
@@ -3936,8 +4173,37 @@
         var last = (r.lastDate === undefined || r.lastDate === null) ? "" : r.lastDate;
         if (typeof last !== "string" || (last !== "" && !parseDate(last))) return { error: "健康提醒数据格式不正确" };
         if (typeof r.cycle !== "number" || (r.cycle !== 0 && CYCLE_OPTIONS.indexOf(r.cycle) < 0)) return { error: "健康提醒数据格式不正确" };
+        // 步骤 4.12：单次才有"完成与否"；以前的备份里没有这一项，当作已经完成的记录
+        var rdone = r.cycle === 0 ? ((r.done === undefined || r.done === null) ? true : r.done) : false;
+        if (typeof rdone !== "boolean") return { error: "健康提醒数据格式不正确" };
+        var rdd = (r.doneDate === undefined || r.doneDate === null) ? "" : r.doneDate;
+        if (typeof rdd !== "string" || (rdd !== "" && !parseDate(rdd))) return { error: "健康提醒数据格式不正确" };
+        if (!rdone) rdd = "";
         seen[r.id] = true;
-        cleanRem.push({ id: r.id, name: r.name, lastDate: last, cycle: r.cycle });
+        cleanRem.push({ id: r.id, name: r.name, lastDate: last, cycle: r.cycle, done: rdone, doneDate: rdd });
+      }
+    }
+
+    // 以前有过一版单独的"一次性待办"，那时导出的备份里带着 todos：现在合并进提醒项目里，当作"单次"
+    if (d.todos !== undefined && d.todos !== null) {
+      if (!Array.isArray(d.todos)) return { error: "待办数据格式不正确" };
+      if (!cleanRem) cleanRem = [];
+      var haveIds = Object.create(null);
+      cleanRem.forEach(function (x) { haveIds[x.id] = true; });
+      for (i = 0; i < d.todos.length; i++) {
+        r = d.todos[i];
+        if (!isPlainObject(r)) return { error: "待办数据格式不正确" };
+        if (typeof r.id !== "string" || !BK_ID.test(r.id)) return { error: "待办数据格式不正确" };
+        if (typeof r.name !== "string" || r.name.trim() === "") return { error: "待办数据格式不正确" };
+        if (typeof r.dueDate !== "string" || !parseDate(r.dueDate)) return { error: "待办数据格式不正确" };
+        var tdone = (r.done === undefined || r.done === null) ? false : r.done;
+        if (typeof tdone !== "boolean") return { error: "待办数据格式不正确" };
+        var tdd = (r.doneDate === undefined || r.doneDate === null) ? "" : r.doneDate;
+        if (typeof tdd !== "string" || (tdd !== "" && !parseDate(tdd))) return { error: "待办数据格式不正确" };
+        if (!tdone) tdd = "";
+        if (haveIds[r.id]) continue;
+        haveIds[r.id] = true;
+        cleanRem.push({ id: r.id, name: r.name, lastDate: r.dueDate, cycle: 0, done: tdone, doneDate: tdd });
       }
     }
 
@@ -4133,6 +4399,7 @@
     var plan = {};
     plan[STORAGE_KEY] = clean.pet ? JSON.stringify(clean.pet) : null;
     plan[REMINDER_KEY] = clean.reminders ? JSON.stringify(clean.reminders) : null;
+    plan[TODO_KEY] = null;   // 步骤 4.12：以前那版"一次性待办"留在本机的数据清掉，免得刷新后又被搬进导入的数据里
     plan[EXPENSE_KEY] = JSON.stringify(clean.expenses);
     plan[WEIGHT_KEY] = JSON.stringify(clean.weights);
     plan[DIARY_KEY] = JSON.stringify(storedDiaries);
@@ -4360,7 +4627,7 @@
 
   // ---------- 存储空间显示 ----------
   function ourStorageKeys() {
-    return [STORAGE_KEY, REMINDER_KEY, EXPENSE_KEY, WEIGHT_KEY, DIARY_KEY,
+    return [STORAGE_KEY, REMINDER_KEY, TODO_KEY, EXPENSE_KEY, WEIGHT_KEY, DIARY_KEY,
             CAL_ASK_KEY, CAL_EXPORTED_KEY, LAST_BACKUP_KEY, BACKUP_SNOOZE_KEY];
   }
 
@@ -4670,8 +4937,45 @@
     });
   }
 
+  // 以前有过一版单独的"一次性待办"（存在 petTodos_v1 里）。现在合并进了提醒项目，
+  // 这里把它们搬进来，当作"单次"。先写进提醒项目，写成功了才删掉旧的；任何一步出错，旧的原样留着，下次再试。
+  function migrateLegacyTodos() {
+    var text;
+    try { text = localStorage.getItem(TODO_KEY); } catch (e) { return; }
+    if (text === null) return;
+    if (!reminders || corrupt.reminders) return;   // 提醒数据还没准备好、或读取失败时先不动，免得覆盖原始数据
+    var arr;
+    try { arr = JSON.parse(text); } catch (e) { return; }
+    if (!Array.isArray(arr)) return;
+    var have = Object.create(null);
+    reminders.forEach(function (r) { have[r.id] = true; });
+    var added = [];
+    arr.forEach(function (t) {
+      if (!t || typeof t.name !== "string" || t.name.trim() === "" || !parseDate(t.dueDate)) return;
+      var id = String(t.id || newId());
+      if (have[id]) return;
+      have[id] = true;
+      var done = t.done === true;
+      added.push({
+        id: id,
+        name: t.name,
+        lastDate: t.dueDate,
+        cycle: 0,
+        done: done,
+        doneDate: (done && typeof t.doneDate === "string" && parseDate(t.doneDate)) ? t.doneDate : ""
+      });
+    });
+    if (added.length) {
+      var before = reminders;
+      reminders = reminders.concat(added);
+      if (!saveReminders()) { reminders = before; return; }
+    }
+    try { localStorage.removeItem(TODO_KEY); } catch (e) {}
+  }
+
   // ---------- 启动 ----------
   syncCalSwitch();
+  migrateLegacyTodos();       // 步骤 4.12：把以前的"一次性待办"搬进提醒项目
   updateCorruptBanner();      // 步骤 4.6a：有读取失败的部分就显示顶部提示
   updateLastBackupText();     // 步骤 4.6a：显示"上次导出"
   showImportDoneIfAny();      // 步骤 4.6a：导入刷新后显示"导入完成"
