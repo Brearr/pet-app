@@ -1,0 +1,4699 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>宠物档案</title>
+<style>
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+
+  body {
+    margin: 0;
+    background: #faf6f0;
+    color: #4a4036;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    font-size: 17px;
+    line-height: 1.5;
+  }
+  main {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 20px 16px 8px;
+  }
+  h1 {
+    font-size: 22px;
+    text-align: center;
+    margin: 0 0 20px;
+  }
+
+  .card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 24px 20px;
+    box-shadow: 0 2px 8px rgba(120, 100, 80, 0.12);
+    text-align: center;
+  }
+  .avatar {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #f0e6d8;
+    display: block;
+    margin: 0 auto 12px;
+  }
+  .avatar-emoji {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: #f0e6d8;
+    margin: 0 auto 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 56px;
+  }
+  .pet-name { font-size: 26px; font-weight: bold; margin: 4px 0; }
+  .days { font-size: 20px; color: #b5702f; margin: 6px 0; }
+  .info { color: #8a7d6e; font-size: 15px; margin: 2px 0; }
+
+  .empty {
+    text-align: center;
+    padding: 36px 16px;
+    font-size: 18px;
+  }
+
+  button {
+    font-size: 17px;
+    padding: 14px 16px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    min-height: 50px;
+    font-family: inherit;
+  }
+  .btn-main { background: #d98f4e; color: #fff; width: 100%; }
+  .btn-soft { background: #efe5d6; color: #4a4036; }
+  .btn-danger { background: #f3dcd7; color: #a8412f; }
+  .btn-row { display: flex; gap: 10px; margin-top: 18px; }
+  .btn-row button { flex: 1; }
+
+  label { display: block; margin: 14px 0 6px; font-weight: bold; }
+  .req { color: #c0563f; }
+  input[type="text"], input[type="date"], select {
+    width: 100%;
+    font-size: 17px;
+    padding: 12px;
+    border: 1px solid #d9cdbd;
+    border-radius: 10px;
+    background: #fff;
+    color: #4a4036;
+    font-family: inherit;
+  }
+  input[type="file"] { width: 100%; font-size: 15px; }
+  .preview {
+    width: 90px; height: 90px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+    margin: 10px 0 0;
+    background: #f0e6d8;
+  }
+  .small-btn {
+    font-size: 14px; padding: 8px 12px; min-height: 0; margin-top: 8px;
+  }
+  .error { color: #c0563f; font-size: 15px; margin-top: 10px; }
+
+  footer {
+    max-width: 480px;
+    margin: 24px auto 28px;
+    padding: 14px 16px;
+    background: #f3ead9;
+    border-radius: 12px;
+    font-size: 14px;
+    color: #6b5f50;
+    text-align: left;
+  }
+
+  /* ================= 步骤 2 新增样式 ================= */
+
+  /* 给底部导航栏留出位置，免得挡住页面底部的文字 */
+  body { padding-bottom: 84px; }
+
+  .tabbar {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    display: flex;
+    background: #ffffff;
+    border-top: 1px solid #e6dccd;
+    z-index: 10;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .tab-btn {
+    flex: 1;
+    background: transparent;
+    color: #8a7d6e;
+    border-radius: 0;
+    min-height: 58px;
+    font-size: 17px;
+  }
+  .tab-btn.active {
+    color: #b5702f;
+    font-weight: bold;
+    background: #fbf3e8;
+  }
+  .badge {
+    display: inline-block;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    border-radius: 11px;
+    background: #d9534f;
+    color: #fff;
+    font-size: 14px;
+    line-height: 22px;
+    text-align: center;
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+
+  .left { text-align: left; }
+  .section-title { font-size: 19px; font-weight: bold; margin-bottom: 10px; }
+  .hint { font-size: 14px; color: #8a7d6e; margin-bottom: 12px; }
+
+  /* 通知栏 */
+  .notice {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+  }
+  .notice-red { background: #f9dcd8; color: #a8302a; }
+  .notice-yellow { background: #fbefc4; color: #7a5b00; }
+  .notice-green { background: #dff0da; color: #33702f; }
+  .notice-name { font-weight: bold; }
+  .notice-status { font-size: 15px; }
+  .notice-empty { text-align: center; padding: 16px 0; color: #6b5f50; }
+  .handled-btn {
+    font-size: 14px;
+    padding: 8px 12px;
+    min-height: 44px;
+    flex-shrink: 0;
+  }
+
+  /* 健康提醒列表 */
+  .item {
+    border: 1px solid #eadfce;
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    background: #fffdf9;
+  }
+  .item-name { font-weight: bold; font-size: 18px; margin-bottom: 4px; }
+  .item-line { font-size: 15px; color: #6b5f50; }
+  .item-note { font-size: 13px; color: #a09384; margin-top: 4px; }
+  .tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: bold;
+    margin: 4px 0;
+  }
+  .tag-red { background: #f9dcd8; color: #a8302a; }
+  .tag-yellow { background: #fbefc4; color: #7a5b00; }
+  .tag-green { background: #dff0da; color: #33702f; }
+  .item-btns { display: flex; gap: 10px; margin-top: 10px; }
+  .item-btns button { flex: 1; font-size: 15px; padding: 10px; min-height: 44px; }
+  .list-empty { text-align: center; padding: 12px 0; color: #8a7d6e; }
+
+  /* 弹出的输入框 */
+  .mask {
+    position: fixed;
+    left: 0; top: 0; right: 0; bottom: 0;
+    background: rgba(60, 45, 30, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    z-index: 20;
+  }
+  .modal {
+    background: #fff;
+    border-radius: 16px;
+    padding: 20px;
+    width: 100%;
+    max-width: 420px;
+    max-height: 90vh;
+    overflow: auto;
+    text-align: left;
+  }
+  .modal-title { font-size: 19px; font-weight: bold; }
+
+  /* ================= 步骤 3 新增样式 ================= */
+
+  /* 三个标签时，减小按钮左右间距，避免小红点被挤到下一行 */
+  .tab-btn { padding-left: 4px; padding-right: 4px; white-space: nowrap; }
+
+  /* 时间范围选择器 */
+  .range-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+  .range-btn {
+    flex: 1 1 45%;
+    font-size: 15px;
+    padding: 10px;
+    min-height: 44px;
+    background: #efe5d6;
+    color: #4a4036;
+  }
+  .range-btn.active { background: #d98f4e; color: #fff; font-weight: bold; }
+  .range-title { font-weight: bold; margin: 16px 0 8px; }
+  .range-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .range-label { width: 44px; flex-shrink: 0; font-size: 15px; color: #6b5f50; }
+  .range-row select { width: auto; flex: 1; min-width: 0; padding: 10px 8px; font-size: 16px; }
+  .range-apply { margin-top: 4px; }
+  .range-text { margin-top: 12px; font-size: 14px; color: #8a7d6e; }
+
+  /* 统计区 */
+  .stat-total { font-size: 24px; font-weight: bold; color: #b5702f; margin-bottom: 4px; }
+  .stat-sub { font-size: 16px; font-weight: bold; margin: 16px 0 6px; }
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 6px 0;
+    border-bottom: 1px dashed #eadfce;
+    font-size: 16px;
+  }
+  .stat-row span:last-child { color: #6b5f50; text-align: right; }
+
+  /* 开销列表 */
+  .exp-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .exp-date { font-weight: bold; font-size: 17px; }
+  .exp-amount { font-weight: bold; font-size: 19px; color: #b5702f; }
+
+  /* ================= 步骤 4 新增样式 ================= */
+
+  /* 四个标签时，导航栏文字再调小一点，免得挤到换行 */
+  .tab-btn { font-size: 14px; padding-left: 2px; padding-right: 2px; min-width: 0; }
+  .badge { margin-left: 2px; min-width: 20px; height: 20px; line-height: 20px; padding: 0 5px; font-size: 13px; }
+
+  /* 折线图 */
+  .chart-svg { width: 100%; height: auto; display: block; margin-top: 12px; overflow: hidden; }
+  .chart-info {
+    margin-top: 8px;
+    padding: 10px 12px;
+    background: #fbf3e8;
+    border-radius: 10px;
+    font-size: 15px;
+    color: #6b5f50;
+    text-align: center;
+  }
+  .wt-dot { cursor: pointer; }
+
+  /* ================= 步骤 4.2 新增样式 ================= */
+
+  /* 五个标签：文字再小一点；小红点改成浮在按钮右上角，不占文字位置，所以不会换行 */
+  .tab-btn { position: relative; font-size: 13px; line-height: 1.2; padding-left: 1px; padding-right: 1px; white-space: nowrap; }
+  .badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    margin: 0;
+    min-width: 18px;
+    height: 18px;
+    line-height: 18px;
+    padding: 0 4px;
+    font-size: 12px;
+  }
+
+  /* 心情选择 */
+  .mood-box { display: flex; gap: 8px; }
+  .mood-btn {
+    flex: 1;
+    min-width: 0;
+    font-size: 26px;
+    padding: 6px 0;
+    min-height: 52px;
+    background: #f6efe4;
+    border: 2px solid transparent;
+  }
+  .mood-btn.active { background: #fbe3c8; border-color: #d98f4e; }
+
+  /* 日记输入框：约 4 行，会随内容自动变高 */
+  textarea.diary-input {
+    display: block;
+    width: 100%;
+    font-size: 17px;
+    line-height: 1.5;
+    padding: 12px;
+    border: 1px solid #d9cdbd;
+    border-radius: 10px;
+    background: #fff;
+    color: #4a4036;
+    font-family: inherit;
+    resize: none;
+    overflow-y: auto;
+    max-height: 50vh;
+  }
+
+  /* 日记列表 */
+  .diary-mood { font-size: 22px; line-height: 1; }
+  .diary-text {
+    margin-top: 6px;
+    font-size: 16px;
+    line-height: 1.5;
+    white-space: pre-wrap;        /* 保留换行 */
+    overflow-wrap: anywhere;      /* 很长的一行也会自动换行 */
+    word-break: break-word;
+    color: #4a4036;
+  }
+  .diary-text.clamp {             /* 折叠：只显示前 3 行 */
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
+  }
+  .diary-toggle {
+    background: transparent;
+    color: #b5702f;
+    font-size: 15px;
+    font-weight: bold;
+    padding: 6px 4px;
+    min-height: 40px;
+  }
+
+  /* ================= 步骤 4.5 新增样式 ================= */
+
+  /* 「📅 加到日历」按钮那一行 */
+  .cal-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+  .cal-btn { font-size: 15px; padding: 10px 14px; min-height: 44px; }
+  .cal-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .cal-small { font-size: 13px; color: #a8302a; }
+
+  /* 加到日历的确认框 */
+  .cal-text { font-size: 17px; margin: 12px 0 8px; }
+  .cal-hint {
+    background: #fbefc4;
+    color: #7a5b00;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 14px;
+    margin-top: 8px;
+  }
+  .cal-note { font-size: 13px; color: #8a7d6e; margin-top: 8px; }
+  .cal-warn {
+    background: #f9dcd8;
+    color: #a8302a;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 14px;
+    margin-top: 10px;
+  }
+  .cal-btns { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+  .cal-btns button { width: 100%; min-height: 48px; }
+
+  /* 设置区的开关 */
+  .switch-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0;
+    padding: 8px 0;
+    min-height: 48px;
+    font-weight: normal;
+    cursor: pointer;
+  }
+  input.switch {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 52px;
+    height: 30px;
+    margin: 0;
+    border: none;
+    border-radius: 15px;
+    background: #d9cdbd;
+    position: relative;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  input.switch::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #fff;
+    transition: left 0.15s;
+  }
+  input.switch:checked { background: #d98f4e; }
+  input.switch:checked::after { left: 25px; }
+
+  /* ================= 步骤 4.6a 新增样式 ================= */
+
+  /* 页面顶部：数据读取失败的提示条 */
+  .banner-warn {
+    background: #fbefc4;
+    color: #7a5b00;
+    border: 1px solid #ecd98a;
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    font-size: 15px;
+    text-align: left;
+  }
+
+  /* 备份区和弹框里的结果提示 */
+  .msg { margin-top: 10px; padding: 10px 12px; border-radius: 10px; font-size: 15px; text-align: left; }
+  .msg-ok { background: #dff0da; color: #33702f; }
+  .msg-err { background: #f9dcd8; color: #a8302a; }
+
+  /* 备份区的两个按钮：窄屏上也尽量一行放下 */
+  #backupBox .btn-row { margin-top: 0; }
+  #backupBox .btn-row button { font-size: 16px; padding: 12px 8px; min-height: 48px; }
+
+  /* ================= 步骤 4.7 新增样式（日记图片） ================= */
+
+  /* 日记弹框里的图片预览 */
+  .diary-img-preview {
+    display: block;
+    max-width: 100%;
+    max-height: 220px;
+    border-radius: 10px;
+    margin-top: 10px;
+    background: #f0e6d8;
+  }
+  .diary-img-remove { font-size: 15px; padding: 10px 14px; min-height: 44px; margin-top: 8px; }
+
+  /* 日记列表里的图片：宽度跟着卡片走，不会撑出横向滚动条 */
+  .diary-img {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+    margin-top: 10px;
+    background: #f0e6d8;
+  }
+
+  /* ================= 步骤 4.8 新增样式 ================= */
+
+  /* 黄色提示条：文字在左，关闭按钮在右 */
+  .banner-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .banner-close {
+    flex-shrink: 0;
+    background: transparent;
+    color: #7a5b00;
+    border: 1px solid #ecd98a;
+    font-size: 15px;
+    padding: 8px 14px;
+    min-height: 44px;
+  }
+
+  /* 备份提醒条 */
+  .banner-info {
+    background: #fdebd3;
+    color: #7a4a12;
+    border: 1px solid #f0c9a0;
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    font-size: 15px;
+    text-align: left;
+  }
+  .banner-btns { display: flex; gap: 10px; margin-top: 10px; }
+  .banner-btns button { flex: 1; font-size: 15px; padding: 10px 8px; min-height: 44px; }
+
+  /* "还有 N 条记录不在当前时间范围内"的提示 */
+  .outside-hint {
+    margin-top: 12px;
+    padding: 10px 12px;
+    background: #fbefc4;
+    color: #7a5b00;
+    border-radius: 10px;
+    font-size: 14px;
+    text-align: left;
+  }
+  .outside-btn { display: block; margin-top: 8px; font-size: 15px; padding: 10px 14px; min-height: 44px; }
+
+  /* 存储空间 */
+  .storage-box { margin-top: 16px; padding-top: 14px; border-top: 1px dashed #eadfce; }
+  .storage-title { font-weight: bold; font-size: 16px; }
+  .storage-bar { height: 10px; background: #eadfce; border-radius: 5px; overflow: hidden; margin: 8px 0; }
+  #storageBarFill { height: 100%; width: 0; background: #d98f4e; border-radius: 5px; }
+  #storageBarFill.warn { background: #c0563f; }
+</style>
+</head>
+<body>
+
+<main>
+  <!-- 步骤 4.6a：数据读取失败时显示在页面最上面（步骤 4.8：加了"关闭"按钮） -->
+  <div id="corruptBanner" class="banner-warn banner-row" role="alert" hidden>
+    <span>部分数据读取失败，已忽略。如果你有备份文件，可以在档案页底部导入恢复。</span>
+    <button type="button" id="corruptClose" class="banner-close">关闭</button>
+  </div>
+
+  <!-- 步骤 4.8 新增：该备份了的提醒 -->
+  <div id="backupBanner" class="banner-info" role="status" hidden>
+    <div id="backupBannerText"></div>
+    <div class="banner-btns">
+      <button type="button" id="backupBannerExport" class="btn-main">📤 现在导出</button>
+      <button type="button" id="backupBannerLater" class="btn-soft">7 天后再提醒</button>
+    </div>
+  </div>
+
+  <h1>🐾 宠物档案</h1>
+
+  <!-- ===== 标签 1：档案页（步骤 1 原有内容） ===== -->
+  <div id="pageProfile">
+
+    <!-- 没有档案时 -->
+    <section id="emptyView" class="card" hidden>
+      <div class="empty">🐾 还没有档案，先添加你的宠物吧</div>
+      <button id="addBtn" class="btn-main">➕ 添加宠物</button>
+    </section>
+
+    <!-- 有档案时 -->
+    <section id="profileView" class="card" hidden>
+      <div id="avatarBox"></div>
+      <div id="petName" class="pet-name"></div>
+      <div id="daysLine" class="days"></div>
+      <div id="infoSpecies" class="info"></div>
+      <div id="infoBreed" class="info"></div>
+      <div id="infoBirthday" class="info"></div>
+      <div id="infoHome" class="info"></div>
+      <div class="btn-row">
+        <button id="editBtn" class="btn-soft">✏️ 编辑档案</button>
+        <button id="deleteBtn" class="btn-danger">🗑️ 删除档案</button>
+      </div>
+    </section>
+
+    <!-- 表单 -->
+    <form id="formView" class="card" style="text-align:left" hidden>
+      <label for="nameInput">名字 <span class="req">*必填</span></label>
+      <input type="text" id="nameInput" maxlength="30">
+
+      <label for="speciesSelect">物种</label>
+      <select id="speciesSelect">
+        <option value="猫">🐱 猫</option>
+        <option value="狗">🐶 狗</option>
+        <option value="其他">🐾 其他</option>
+      </select>
+      <input type="text" id="speciesOther" placeholder="请填写物种，例如：兔子" maxlength="20" style="margin-top:8px" hidden>
+
+      <label for="breedInput">品种（选填）</label>
+      <input type="text" id="breedInput" maxlength="30">
+
+      <label for="birthdayInput">生日（选填）</label>
+      <input type="date" id="birthdayInput">
+
+      <label for="homeInput">到家日期 <span class="req">*必填</span></label>
+      <input type="date" id="homeInput">
+
+      <label for="avatarInput">头像（选填）</label>
+      <input type="file" id="avatarInput" accept="image/*">
+      <div id="avatarHint" class="hint" style="margin:6px 0 0"></div>
+      <img id="avatarPreview" class="preview" alt="头像预览" hidden>
+      <button type="button" id="removeAvatarBtn" class="btn-soft small-btn" hidden>移除头像</button>
+
+      <div id="formError" class="error" hidden></div>
+
+      <div class="btn-row">
+        <button type="submit" class="btn-main">💾 保存</button>
+        <button type="button" id="cancelBtn" class="btn-soft">取消</button>
+      </div>
+    </form>
+
+    <!-- 步骤 4.6a 新增：数据备份区（没有档案时也能用，方便在新设备上恢复） -->
+    <section id="backupBox" class="card left" style="margin-top:16px">
+      <div class="section-title">💾 数据备份</div>
+      <div class="btn-row">
+        <button type="button" id="exportBtn" class="btn-soft">📤 导出备份</button>
+        <button type="button" id="importBtn" class="btn-soft">📥 导入备份</button>
+      </div>
+      <div id="lastBackup" class="hint" style="margin:10px 0 0"></div>
+      <div id="backupMsg" class="msg" role="status" hidden></div>
+
+      <!-- 步骤 4.8 新增：存储空间（步骤 4.9：日记图片改存到单独的图片存储，所以多了图片和总空间两行） -->
+      <div class="storage-box">
+        <div class="storage-title">📦 存储空间</div>
+        <div class="storage-bar"><div id="storageBarFill"></div></div>
+        <div id="storageText" class="hint" style="margin:0"></div>
+        <div id="imageStorageText" class="hint" style="margin:8px 0 0" hidden></div>
+        <div id="estimateText" class="hint" style="margin:8px 0 0" hidden></div>
+        <div id="persistText" class="hint" style="margin:8px 0 0" hidden></div>
+      </div>
+
+      <input type="file" id="importFile" accept=".json,application/json" hidden>
+    </section>
+  </div>
+
+  <!-- ===== 标签 2：提醒页（步骤 2 新增） ===== -->
+  <div id="pageReminder" hidden>
+
+    <!-- 没建档案时 -->
+    <section id="reminderNoPet" class="card" hidden>
+      <div class="empty">🐾 请先在档案页添加你的宠物</div>
+    </section>
+
+    <!-- 建了档案时 -->
+    <div id="reminderMain" hidden>
+      <section class="card left">
+        <div class="section-title">🔔 待办提醒</div>
+        <div id="noticeList"></div>
+      </section>
+
+      <section class="card left" style="margin-top:16px">
+        <div class="section-title">🩺 健康提醒</div>
+        <div class="hint">周期请按兽医建议填写。</div>
+        <div id="itemList"></div>
+        <button type="button" id="addItemBtn" class="btn-main" style="margin-top:14px">➕ 新增项目</button>
+      </section>
+
+      <!-- 步骤 4.5 新增：设置区 -->
+      <section class="card left" style="margin-top:16px">
+        <div class="section-title">⚙️ 设置</div>
+        <label class="switch-row" for="calAskSwitch">
+          <span>保存后询问是否加到日历</span>
+          <input type="checkbox" id="calAskSwitch" class="switch" checked>
+        </label>
+        <div class="hint" style="margin:8px 0 0">关闭后，保存时不再自动弹出询问；每个项目旁边的“📅 加到日历”按钮仍然可以手动使用。</div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ===== 标签 3：开销页（步骤 3 新增） ===== -->
+  <div id="pageExpense" hidden>
+
+    <!-- 没建档案时 -->
+    <section id="expenseNoPet" class="card" hidden>
+      <div class="empty">🐾 请先在档案页添加你的宠物</div>
+    </section>
+
+    <!-- 建了档案时 -->
+    <div id="expenseMain" hidden>
+      <button type="button" id="addExpenseBtn" class="btn-main">➕ 记一笔</button>
+
+      <section class="card left" style="margin-top:16px">
+        <div class="section-title">📅 时间范围</div>
+        <div id="expenseRange"></div>
+        <div id="expenseOutside" class="outside-hint" hidden></div>
+      </section>
+
+      <section class="card left" style="margin-top:16px">
+        <div class="section-title">📊 统计</div>
+        <div id="expenseStats"></div>
+      </section>
+
+      <section class="card left" style="margin-top:16px">
+        <div class="section-title">🧾 开销记录</div>
+        <div id="expenseList"></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ===== 标签 4：体重页（步骤 4 新增） ===== -->
+  <div id="pageWeight" hidden>
+
+    <!-- 没建档案时 -->
+    <section id="weightNoPet" class="card" hidden>
+      <div class="empty">🐾 请先在档案页添加你的宠物</div>
+    </section>
+
+    <!-- 建了档案时 -->
+    <div id="weightMain" hidden>
+      <button type="button" id="addWeightBtn" class="btn-main">➕ 记体重</button>
+
+      <section class="card left" style="margin-top:16px">
+        <div class="section-title">📅 时间范围</div>
+        <div id="weightRange"></div>
+        <div id="weightOutside" class="outside-hint" hidden></div>
+      </section>
+
+      <section class="card left" style="margin-top:16px">
+        <div class="section-title">📈 体重变化</div>
+        <div id="weightSummary"></div>
+      </section>
+
+      <section id="weightListCard" class="card left" style="margin-top:16px" hidden>
+        <div class="section-title">⚖️ 体重记录</div>
+        <div id="weightList"></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ===== 标签 5：日记页（步骤 4.2 新增） ===== -->
+  <div id="pageDiary" hidden>
+
+    <!-- 没建档案时 -->
+    <section id="diaryNoPet" class="card" hidden>
+      <div class="empty">🐾 请先在档案页添加你的宠物</div>
+    </section>
+
+    <!-- 建了档案时 -->
+    <div id="diaryMain" hidden>
+      <button type="button" id="addDiaryBtn" class="btn-main">➕ 写日记</button>
+
+      <section class="card left" style="margin-top:16px">
+        <div class="section-title">📅 时间范围</div>
+        <div id="diaryRange"></div>
+        <div id="diaryOutside" class="outside-hint" hidden></div>
+      </section>
+
+      <section class="card left" style="margin-top:16px">
+        <div class="section-title">📔 日记</div>
+        <div id="diaryList"></div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<footer>
+  数据默认只保存在本机，不上传服务器；清缓存、换设备或浏览器回收存储都可能导致数据丢失。共享设备上的本地数据并非完全私密。
+</footer>
+
+<!-- 底部固定导航栏 -->
+<nav class="tabbar">
+  <button type="button" id="tabProfileBtn" class="tab-btn active">🐾 档案</button>
+  <button type="button" id="tabReminderBtn" class="tab-btn">🔔 提醒 <span id="badge" class="badge" hidden>0</span></button>
+  <button type="button" id="tabExpenseBtn" class="tab-btn">💰 开销</button>
+  <button type="button" id="tabWeightBtn" class="tab-btn">⚖️ 体重</button>
+  <button type="button" id="tabDiaryBtn" class="tab-btn">📔 日记</button>
+</nav>
+
+<!-- 弹出输入框：「已处理」和「新增/编辑项目」共用 -->
+<div id="modalMask" class="mask" hidden>
+  <div class="modal">
+
+    <form id="handleForm" hidden>
+      <div id="handleTitle" class="modal-title"></div>
+      <label for="handleDate">新的上次日期</label>
+      <input type="date" id="handleDate">
+      <div id="handleError" class="error" hidden></div>
+      <div class="btn-row">
+        <button type="submit" class="btn-main">💾 保存</button>
+        <button type="button" id="handleCancel" class="btn-soft">取消</button>
+      </div>
+    </form>
+
+    <form id="itemForm" hidden>
+      <div id="itemFormTitle" class="modal-title"></div>
+      <label for="itemName">项目名称 <span class="req">*必填</span></label>
+      <input type="text" id="itemName" maxlength="20">
+      <label for="itemLast">上次日期（选填）</label>
+      <input type="date" id="itemLast">
+      <label for="itemCycle">周期</label>
+      <select id="itemCycle">
+        <option value="1">每 1 个月</option>
+        <option value="2">每 2 个月</option>
+        <option value="3">每 3 个月</option>
+        <option value="6">每 6 个月</option>
+        <option value="12">每 12 个月</option>
+        <option value="0">不循环，只记日期</option>
+      </select>
+      <div id="itemError" class="error" hidden></div>
+      <div class="btn-row">
+        <button type="submit" class="btn-main">💾 保存</button>
+        <button type="button" id="itemCancel" class="btn-soft">取消</button>
+      </div>
+    </form>
+
+  </div>
+</div>
+
+<!-- 弹出输入框：新增/编辑开销（步骤 3 新增） -->
+<div id="expenseMask" class="mask" hidden>
+  <div class="modal">
+    <form id="expenseForm">
+      <div id="expenseFormTitle" class="modal-title"></div>
+
+      <label for="expDate">日期 <span class="req">*必填</span></label>
+      <input type="date" id="expDate">
+
+      <label for="expAmount">金额（元） <span class="req">*必填</span></label>
+      <input type="text" id="expAmount" inputmode="decimal" placeholder="例如 35.50" maxlength="12" autocomplete="off">
+
+      <label for="expCategory">类别</label>
+      <select id="expCategory">
+        <option value="粮食">🍖 粮食</option>
+        <option value="医疗">🏥 医疗</option>
+        <option value="洗护">🛁 洗护</option>
+        <option value="玩具">🧸 玩具</option>
+        <option value="其他">📦 其他</option>
+      </select>
+
+      <label for="expNote">备注（选填）</label>
+      <input type="text" id="expNote" maxlength="50">
+
+      <div id="expError" class="error" hidden></div>
+      <div class="btn-row">
+        <button type="submit" class="btn-main">💾 保存</button>
+        <button type="button" id="expCancel" class="btn-soft">取消</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 弹出输入框：新增/编辑体重（步骤 4 新增） -->
+<div id="weightMask" class="mask" hidden>
+  <div class="modal">
+    <form id="weightForm">
+      <div id="weightFormTitle" class="modal-title"></div>
+
+      <label for="wtDate">日期 <span class="req">*必填</span></label>
+      <input type="date" id="wtDate">
+
+      <label for="wtValue">体重（kg） <span class="req">*必填</span></label>
+      <input type="text" id="wtValue" inputmode="decimal" placeholder="例如 5.6" maxlength="8" autocomplete="off">
+
+      <div id="wtError" class="error" hidden></div>
+      <div class="btn-row">
+        <button type="submit" class="btn-main">💾 保存</button>
+        <button type="button" id="wtCancel" class="btn-soft">取消</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 弹出输入框：新增/编辑日记（步骤 4.2 新增；步骤 4.7 加了图片） -->
+<div id="diaryMask" class="mask" hidden>
+  <div class="modal">
+    <form id="diaryForm">
+      <div id="diaryFormTitle" class="modal-title"></div>
+
+      <label for="diaryDate">日期 <span class="req">*必填</span></label>
+      <input type="date" id="diaryDate">
+
+      <label id="moodLabel">心情（选填，再点一下可取消）</label>
+      <div class="mood-box" role="group" aria-labelledby="moodLabel">
+        <button type="button" class="mood-btn" data-mood="😊" aria-label="开心" aria-pressed="false">😊</button>
+        <button type="button" class="mood-btn" data-mood="😴" aria-label="犯困" aria-pressed="false">😴</button>
+        <button type="button" class="mood-btn" data-mood="😋" aria-label="好胃口" aria-pressed="false">😋</button>
+        <button type="button" class="mood-btn" data-mood="🤒" aria-label="不舒服" aria-pressed="false">🤒</button>
+        <button type="button" class="mood-btn" data-mood="🥳" aria-label="兴奋" aria-pressed="false">🥳</button>
+      </div>
+
+      <label for="diaryText">内容 <span class="req">*必填</span></label>
+      <textarea id="diaryText" class="diary-input" rows="4" placeholder="今天发生了什么？"></textarea>
+
+      <!-- 步骤 4.7 新增：每条日记最多 1 张图片 -->
+      <label for="diaryImageInput">图片（选填，最多 1 张）</label>
+      <input type="file" id="diaryImageInput" accept="image/*">
+      <div id="diaryImageHint" class="hint" style="margin:6px 0 0"></div>
+      <img id="diaryImagePreview" class="diary-img-preview" alt="日记图片预览" hidden>
+      <button type="button" id="diaryImageRemove" class="btn-soft diary-img-remove" hidden>移除图片</button>
+
+      <div id="diaryError" class="error" hidden></div>
+      <div class="btn-row">
+        <button type="submit" class="btn-main">💾 保存</button>
+        <button type="button" id="diaryCancel" class="btn-soft">取消</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 确认框：加到日历（步骤 4.5 新增） -->
+<div id="calMask" class="mask" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="calTitle">
+    <div id="calTitle" class="modal-title">📅 加到日历</div>
+    <p id="calText" class="cal-text"></p>
+    <div id="calOldHint" class="cal-hint" hidden>这一项之前加过日历，旧的日历事件需要你自己在日历里删除。</div>
+    <div class="cal-note">日历里的事件不会随这里的修改自动更新。</div>
+    <div id="calWechat" class="cal-warn" hidden>微信里可能无法添加到日历，请用手机自带浏览器（Safari / Chrome）打开本页再添加。</div>
+    <div id="calError" class="error" hidden></div>
+    <div class="cal-btns">
+      <button type="button" id="calYes" class="btn-main">加到日历</button>
+      <button type="button" id="calNo" class="btn-soft">这次不用</button>
+      <button type="button" id="calNever" class="btn-soft">以后都不再提醒</button>
+    </div>
+  </div>
+</div>
+
+<!-- 弹框：删除档案前的提示（步骤 4.6a 新增；可用 Esc 或点遮罩关闭） -->
+<div id="delMask" class="mask" hidden>
+  <div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="delTitle" aria-describedby="delText">
+    <div id="delTitle" class="modal-title">🗑️ 删除档案</div>
+    <p id="delText" class="cal-text">删除会清除所有数据（档案、提醒、开销、体重、日记），不能恢复。建议先导出备份。</p>
+    <div id="delMsg" class="msg" role="status" hidden></div>
+    <div class="cal-btns">
+      <button type="button" id="delExport" class="btn-main">📤 先导出备份</button>
+      <button type="button" id="delConfirm" class="btn-danger">仍然删除</button>
+      <button type="button" id="delCancel" class="btn-soft">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- 弹框：导入备份前的确认（步骤 4.6a 新增；可用 Esc 或点遮罩关闭） -->
+<div id="impMask" class="mask" hidden>
+  <div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="impTitle" aria-describedby="impSummary">
+    <div id="impTitle" class="modal-title">📥 导入备份</div>
+    <p id="impSummary" class="cal-text"></p>
+    <div class="cal-warn">导入会覆盖当前所有数据，建议先导出当前数据。</div>
+    <div id="impError" class="error" hidden></div>
+    <div class="cal-btns">
+      <button type="button" id="impYes" class="btn-main">确定导入</button>
+      <button type="button" id="impNo" class="btn-soft">取消</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 步骤 4.6a：记录哪一部分的本地数据读取失败了（读取失败的部分按"没有数据"显示，并且不会被自动覆盖）
+  var corrupt = { pet: false, reminders: false, expenses: false, weights: false, diaries: false, calAsk: false, calExported: false };
+  var corruptDismissed = false;   // 步骤 4.8：用户点了黄色提示条的"关闭"（只对这一次打开有效）
+
+  var IMAGE_MAX_FILE = 20 * 1024 * 1024;   // 步骤 4.8：头像和日记图片，原图文件超过 20MB 就拒绝
+
+  var STORAGE_KEY = "petProfile_v1";
+  var pet = loadPet();          // 当前宠物档案（没有就是 null）
+  var pendingAvatar = null;     // 表单里当前的头像（图片数据），null 表示没有头像
+  var avatarToken = 0;          // 步骤 4.8：每次选头像/重开表单加 1，用来丢掉过期的缩图结果
+  var avatarBusy = false;       // 步骤 4.8：头像正在处理中
+
+  // ---------- 取页面上的元素 ----------
+  var emptyView = document.getElementById("emptyView");
+  var profileView = document.getElementById("profileView");
+  var formView = document.getElementById("formView");
+
+  var nameInput = document.getElementById("nameInput");
+  var speciesSelect = document.getElementById("speciesSelect");
+  var speciesOther = document.getElementById("speciesOther");
+  var breedInput = document.getElementById("breedInput");
+  var birthdayInput = document.getElementById("birthdayInput");
+  var homeInput = document.getElementById("homeInput");
+  var avatarInput = document.getElementById("avatarInput");
+  var avatarPreview = document.getElementById("avatarPreview");
+  var removeAvatarBtn = document.getElementById("removeAvatarBtn");
+  var formError = document.getElementById("formError");
+
+  // ---------- 读取 / 保存 ----------
+  // 检查档案数据：格式正确就返回整理好的档案，不正确返回 null（读取本地数据和导入备份都用它）
+  function checkPet(o) {
+    if (!o || typeof o !== "object" || Array.isArray(o)) return null;
+    if (typeof o.name !== "string" || o.name.trim() === "") return null;
+    if (typeof o.species !== "string" || o.species.trim() === "") return null;
+    var breed = (o.breed === undefined || o.breed === null) ? "" : o.breed;
+    if (typeof breed !== "string") return null;
+    var birthday = (o.birthday === undefined || o.birthday === null) ? "" : o.birthday;
+    if (typeof birthday !== "string" || (birthday !== "" && !parseDate(birthday))) return null;
+    if (typeof o.homeDate !== "string" || !parseDate(o.homeDate)) return null;
+    var avatar = null;
+    if (o.avatar !== undefined && o.avatar !== null && o.avatar !== "") {
+      if (typeof o.avatar !== "string") return null;
+      if (!/^data:image\/(png|jpeg|jpg|gif|webp);base64,[A-Za-z0-9+\/=]+$/.test(o.avatar)) return null;
+      avatar = o.avatar;
+    }
+    return { name: o.name, species: o.species, breed: breed, birthday: birthday, homeDate: o.homeDate, avatar: avatar };
+  }
+
+  function loadPet() {
+    var text;
+    try {
+      text = localStorage.getItem(STORAGE_KEY);
+    } catch (e) {
+      corrupt.pet = true;
+      return null;
+    }
+    if (text === null) return null;
+    try {
+      var v = checkPet(JSON.parse(text));
+      if (v) return v;
+    } catch (e) {}
+    corrupt.pet = true;   // 不是合法 JSON 或类型不对：按"没有档案"显示，但不删除原始数据
+    return null;
+  }
+
+  function savePet(data) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch (e) {
+      return false;
+    }
+    markOk("pet");
+    askPersistentStorage();   // 步骤 4.8：有数据了，向浏览器申请"尽量别自动清理"（只会申请一次）
+    return true;
+  }
+
+  // ---------- 日期工具 ----------
+  function todayString() {
+    var d = new Date();
+    var m = String(d.getMonth() + 1).padStart(2, "0");
+    var day = String(d.getDate()).padStart(2, "0");
+    return d.getFullYear() + "-" + m + "-" + day;
+  }
+
+  // 陪伴第 X 天：到家当天是第 1 天；到家日期晚于今天返回 null
+  function companionDay(homeStr) {
+    if (!homeStr) return null;
+    var p = homeStr.split("-");
+    if (p.length !== 3) return null;
+    var now = new Date();
+    var todayUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+    var homeUTC = Date.UTC(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+    var diff = Math.round((todayUTC - homeUTC) / 86400000);
+    if (isNaN(diff) || diff < 0) return null;
+    return diff + 1;
+  }
+
+  // ---------- 页面显示 ----------
+  function speciesEmoji(species) {
+    if (species === "猫") return "🐱";
+    if (species === "狗") return "🐶";
+    return "🐾";
+  }
+
+  function render() {
+    emptyView.hidden = true;
+    profileView.hidden = true;
+    formView.hidden = true;
+
+    if (!pet) {
+      emptyView.hidden = false;
+      return;
+    }
+
+    profileView.hidden = false;
+
+    var box = document.getElementById("avatarBox");
+    box.innerHTML = "";
+    if (pet.avatar) {
+      var img = document.createElement("img");
+      img.className = "avatar";
+      img.alt = "头像";
+      img.src = pet.avatar;
+      box.appendChild(img);
+    } else {
+      var ph = document.createElement("div");
+      ph.className = "avatar-emoji";
+      ph.textContent = speciesEmoji(pet.species);
+      box.appendChild(ph);
+    }
+
+    document.getElementById("petName").textContent = pet.name;
+
+    var daysLine = document.getElementById("daysLine");
+    var n = companionDay(pet.homeDate);
+    if (n === null) {
+      daysLine.hidden = true;
+    } else {
+      daysLine.hidden = false;
+      daysLine.textContent = "💛 陪伴第 " + n + " 天";
+    }
+
+    document.getElementById("infoSpecies").textContent = "物种：" + pet.species;
+    setInfo("infoBreed", pet.breed ? "品种：" + pet.breed : "");
+    setInfo("infoBirthday", pet.birthday ? "🎂 生日：" + pet.birthday : "");
+    setInfo("infoHome", "🏠 到家日期：" + pet.homeDate);
+  }
+
+  function setInfo(id, text) {
+    var el = document.getElementById(id);
+    el.textContent = text;
+    el.hidden = !text;
+  }
+
+  // ---------- 表单 ----------
+  function showAvatarPreview() {
+    if (pendingAvatar) {
+      avatarPreview.src = pendingAvatar;
+      avatarPreview.hidden = false;
+      removeAvatarBtn.hidden = false;
+    } else {
+      avatarPreview.hidden = true;
+      avatarPreview.removeAttribute("src");
+      removeAvatarBtn.hidden = true;
+    }
+  }
+
+  function updateOtherBox() {
+    speciesOther.hidden = speciesSelect.value !== "其他";
+  }
+
+  function openForm(existing) {
+    emptyView.hidden = true;
+    profileView.hidden = true;
+    formView.hidden = false;
+    formError.hidden = true;
+    avatarInput.value = "";
+    avatarToken++;          // 步骤 4.8：重新打开表单，丢掉上一次没处理完的头像
+    avatarBusy = false;
+
+    birthdayInput.max = todayString(); // 生日不能选未来
+
+    if (existing) {
+      nameInput.value = existing.name;
+      if (existing.species === "猫" || existing.species === "狗") {
+        speciesSelect.value = existing.species;
+        speciesOther.value = "";
+      } else {
+        speciesSelect.value = "其他";
+        speciesOther.value = existing.species === "其他" ? "" : existing.species;
+      }
+      breedInput.value = existing.breed || "";
+      birthdayInput.value = existing.birthday || "";
+      homeInput.value = existing.homeDate || "";
+      pendingAvatar = existing.avatar || null;
+    } else {
+      nameInput.value = "";
+      speciesSelect.value = "猫";
+      speciesOther.value = "";
+      breedInput.value = "";
+      birthdayInput.value = "";
+      homeInput.value = "";
+      pendingAvatar = null;
+    }
+    updateOtherBox();
+    showAvatarPreview();
+    window.scrollTo(0, 0);
+  }
+
+  function showError(msg) {
+    formError.textContent = msg;
+    formError.hidden = false;
+  }
+
+  // 把图片缩小到宽度不超过 300 像素，返回图片数据
+  function shrinkImage(file, callback) {
+    var reader = new FileReader();
+    reader.onerror = function () { callback(null); };
+    reader.onload = function () {
+      var img = new Image();
+      img.onerror = function () { callback(null); };
+      img.onload = function () {
+        var w = img.width;
+        var h = img.height;
+        if (w > 300) {
+          h = Math.round(h * 300 / w);
+          w = 300;
+        }
+        var canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        var ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#ffffff";          // 透明图片垫白底
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+        callback(canvas.toDataURL("image/jpeg", 0.85));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // ---------- 按钮事件 ----------
+  document.getElementById("addBtn").addEventListener("click", function () {
+    openForm(null);
+  });
+
+  document.getElementById("editBtn").addEventListener("click", function () {
+    openForm(pet);
+  });
+
+  // 步骤 4.6a：点"删除档案"先弹出提示框（先导出备份 / 仍然删除 / 取消）
+  document.getElementById("deleteBtn").addEventListener("click", function () {
+    openDeleteDialog();
+  });
+
+  // 真正清除所有数据（里面的清除代码是原来的，点"仍然删除"后才会运行）
+  function deleteEverything() {
+    // 步骤 4.9：先记下日记图片是不是存在单独的图片存储里（下面会清空 diaries）
+    var hadIdbImages = diaries.some(function (d) { return d.store === "idb"; });
+
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+    // 步骤 2：提醒项一并清除
+    try { localStorage.removeItem(REMINDER_KEY); } catch (e) {}
+    reminders = null;
+    // 步骤 3：开销记录一并清除
+    try { localStorage.removeItem(EXPENSE_KEY); } catch (e) {}
+    expenses = [];
+    // 步骤 4：体重记录一并清除
+    try { localStorage.removeItem(WEIGHT_KEY); } catch (e) {}
+    weights = [];
+    // 步骤 4.2：日记一并清除
+    try { localStorage.removeItem(DIARY_KEY); } catch (e) {}
+    diaries = [];
+    diaryExpanded = {};
+    // 步骤 4.9：日记图片存在单独的图片存储里，也要一起清掉
+    if (hadIdbImages) {
+      idbClear().catch(function () {
+        alert("日记里的图片没能从这台设备的图片存储里清除，可能还有残留。如果需要彻底清除，请在浏览器设置里清除本网站的数据。");
+      });
+    }
+    // 步骤 4.5：清除"已导出"记录（"保存后询问"的开关设置保留）
+    try { localStorage.removeItem(CAL_EXPORTED_KEY); } catch (e) {}
+    calExported = {};
+    pet = null;
+    // 步骤 4.6a：已清除的部分不再算"读取失败"（日历开关没清除，所以它的状态不动）
+    for (var ck in corrupt) {
+      if (ck !== "calAsk") corrupt[ck] = false;
+    }
+    updateCorruptBanner();
+    render();
+    renderReminders();
+    renderExpenses();
+    renderWeights();
+    renderDiary();
+    updateBackupBanner();   // 步骤 4.8：没有数据了，备份提醒不再显示
+    updateStorageInfo();    // 步骤 4.8：刷新存储空间显示
+  }
+
+  document.getElementById("cancelBtn").addEventListener("click", function () {
+    avatarToken++;          // 步骤 4.8：取消时，还没处理完的头像作废
+    avatarBusy = false;
+    render();
+  });
+
+  speciesSelect.addEventListener("change", updateOtherBox);
+
+  avatarInput.addEventListener("change", function () {
+    var file = avatarInput.files[0];
+    if (!file) return;
+    // 步骤 4.8：HEIC 文件有时拿不到"图片"类型，也让它试一次，失败了再给专门的提示
+    if (file.type.indexOf("image/") !== 0 && !/\.(heic|heif)$/i.test(file.name)) {
+      showError("请选择图片文件。");
+      avatarInput.value = "";
+      return;
+    }
+    if (file.size > IMAGE_MAX_FILE) {
+      showError("这张图片文件太大（超过 20MB），请换一张小一点的。");
+      avatarInput.value = "";
+      return;
+    }
+    formError.hidden = true;
+    var token = ++avatarToken;
+    avatarBusy = true;
+    shrinkImage(file, function (dataUrl) {
+      if (token !== avatarToken) return;   // 期间关掉了表单或点了"移除"：这次结果作废
+      avatarBusy = false;
+      avatarInput.value = "";
+      if (!dataUrl) {
+        showError(imageErrorText(file, null));
+        return;   // 失败时保留原来的头像（如果有）
+      }
+      pendingAvatar = dataUrl;
+      showAvatarPreview();
+    });
+  });
+
+  removeAvatarBtn.addEventListener("click", function () {
+    avatarToken++;
+    avatarBusy = false;
+    pendingAvatar = null;
+    avatarInput.value = "";
+    showAvatarPreview();
+  });
+
+  formView.addEventListener("submit", function (event) {
+    event.preventDefault();
+
+    var name = nameInput.value.trim();
+    if (!name) { showError("请填写名字。"); nameInput.focus(); return; }
+    if (!homeInput.value) { showError("请选择到家日期。"); homeInput.focus(); return; }
+    if (avatarBusy) { showError("头像还在处理，请稍等一下再保存。"); return; }
+
+    var species = speciesSelect.value;
+    if (species === "其他") {
+      species = speciesOther.value.trim() || "其他";
+    }
+
+    var data = {
+      name: name,
+      species: species,
+      breed: breedInput.value.trim(),
+      birthday: birthdayInput.value,
+      homeDate: homeInput.value,
+      avatar: pendingAvatar
+    };
+
+    if (!savePet(data)) {
+      showError("保存失败：浏览器存储空间可能已满，或浏览器禁用了本地存储。");
+      return;
+    }
+    pet = data;
+    // 步骤 2：第一次建档案时，生成默认的三个提醒项
+    if (!reminders) {
+      reminders = defaultReminders();
+      if (!corrupt.reminders) saveReminders();   // 步骤 4.6a：提醒数据损坏时只放内存，不覆盖原始数据
+    }
+    render();
+    renderReminders();
+    renderExpenses();   // 步骤 3：刷新开销页
+    renderWeights();    // 步骤 4：刷新体重页
+    renderDiary();      // 步骤 4.2：刷新日记页
+    window.scrollTo(0, 0);
+  });
+
+  // 页面隔夜没关时，回到页面自动刷新天数
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden && pet && !profileView.hidden) render();
+  });
+
+
+  // =====================================================
+  //                步骤 2：健康提醒（新增）
+  // =====================================================
+
+  var REMINDER_KEY = "petReminders_v1";   // 和档案分开存
+  var CYCLE_OPTIONS = [1, 2, 3, 6, 12];   // 允许的周期（月）；0 表示不循环
+  var idCounter = 0;
+  var reminders = loadReminders();        // 提醒项列表（没有就是 null）
+  var handlingId = null;                  // 正在点「已处理」的项目 id
+  var editingId = null;                   // 正在编辑的项目 id（新增时是 null）
+
+  // ---------- 取页面上的元素 ----------
+  var pageProfile = document.getElementById("pageProfile");
+  var pageReminder = document.getElementById("pageReminder");
+  var tabProfileBtn = document.getElementById("tabProfileBtn");
+  var tabReminderBtn = document.getElementById("tabReminderBtn");
+
+  var modalMask = document.getElementById("modalMask");
+  var handleForm = document.getElementById("handleForm");
+  var handleDate = document.getElementById("handleDate");
+  var handleError = document.getElementById("handleError");
+  var itemForm = document.getElementById("itemForm");
+  var itemName = document.getElementById("itemName");
+  var itemLast = document.getElementById("itemLast");
+  var itemCycle = document.getElementById("itemCycle");
+  var itemError = document.getElementById("itemError");
+
+  // ---------- 读取 / 保存提醒项 ----------
+  function newId() {
+    idCounter++;
+    return "r" + Date.now() + "_" + idCounter;
+  }
+
+  function defaultReminders() {
+    return [
+      { id: newId(), name: "💉 疫苗", lastDate: "", cycle: 12 },
+      { id: newId(), name: "💊 驱虫", lastDate: "", cycle: 3 },
+      { id: newId(), name: "🩺 体检", lastDate: "", cycle: 12 }
+    ];
+  }
+
+  function loadReminders() {
+    var text;
+    try {
+      text = localStorage.getItem(REMINDER_KEY);
+    } catch (e) {
+      corrupt.reminders = true;
+      return null;
+    }
+    if (text === null) return null;
+    try {
+      var arr = JSON.parse(text);
+      if (!Array.isArray(arr)) { corrupt.reminders = true; return null; }
+      var out = [];
+      for (var i = 0; i < arr.length; i++) {
+        var r = arr[i];
+        if (!r || typeof r.name !== "string") { corrupt.reminders = true; continue; }
+        var c = Number(r.cycle);
+        out.push({
+          id: String(r.id || newId()),
+          name: r.name,
+          lastDate: typeof r.lastDate === "string" ? r.lastDate : "",
+          cycle: CYCLE_OPTIONS.indexOf(c) >= 0 ? c : 0
+        });
+      }
+      return out;
+    } catch (e) {
+      corrupt.reminders = true;
+      return null;
+    }
+  }
+
+  function saveReminders() {
+    try {
+      localStorage.setItem(REMINDER_KEY, JSON.stringify(reminders));
+    } catch (e) {
+      return false;
+    }
+    markOk("reminders");
+    return true;
+  }
+
+  function findItem(id) {
+    if (!reminders) return null;
+    for (var i = 0; i < reminders.length; i++) {
+      if (reminders[i].id === id) return reminders[i];
+    }
+    return null;
+  }
+
+  // ---------- 日期计算（全部按"天"算，不按小时） ----------
+  function pad2(n) { return String(n).padStart(2, "0"); }
+
+  function fmtDate(y, m, d) { return y + "-" + pad2(m) + "-" + pad2(d); }
+
+  function daysInMonth(y, m) { return new Date(y, m, 0).getDate(); }   // m 是 1~12
+
+  function isLeap(y) { return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0; }
+
+  // "2026-05-01" -> {y, m, d}；格式不对返回 null
+  function parseDate(str) {
+    if (typeof str !== "string") return null;
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str);
+    if (!m) return null;
+    var y = Number(m[1]), mo = Number(m[2]), d = Number(m[3]);
+    if (mo < 1 || mo > 12 || d < 1 || d > daysInMonth(y, mo)) return null;
+    return { y: y, m: mo, d: d };
+  }
+
+  // 把日期变成"第几天"的整数，方便相减
+  function dateNum(y, m, d) { return Math.round(Date.UTC(y, m - 1, d) / 86400000); }
+
+  function todayNum() {
+    var n = new Date();
+    return dateNum(n.getFullYear(), n.getMonth() + 1, n.getDate());
+  }
+
+  // 日期加 n 个月；月末取当月最后一天（1 月 31 日 + 1 个月 = 2 月 28/29 日）
+  function addMonths(p, n) {
+    var total = (p.m - 1) + n;
+    var y = p.y + Math.floor(total / 12);
+    var m = (total % 12) + 1;
+    var last = daysInMonth(y, m);
+    return { y: y, m: m, d: Math.min(p.d, last) };
+  }
+
+  function cycleLabel(c) {
+    return c ? "每 " + c + " 个月" : "不循环，只记日期";
+  }
+
+  // 算一个提醒项的状态
+  // kind：unfilled 未填写 / noloop 不循环 / overdue 已过期 / soon 30天内 / normal 正常
+  function getItemStatus(item) {
+    var p = parseDate(item.lastDate);
+    if (!p) return { kind: "unfilled" };
+    if (!item.cycle) return { kind: "noloop" };
+    var next = addMonths(p, item.cycle);
+    var nextStr = fmtDate(next.y, next.m, next.d);
+    var diff = dateNum(next.y, next.m, next.d) - todayNum();
+    if (diff < 0) {
+      return { kind: "overdue", days: -diff, next: nextStr, text: "已过期 " + (-diff) + " 天" };
+    }
+    if (diff <= 30) {
+      return { kind: "soon", days: diff, next: nextStr, text: "还有 " + diff + " 天" };
+    }
+    return { kind: "normal", days: diff, next: nextStr, text: "" };
+  }
+
+  // 某一年的生日（2 月 29 日出生的，平年按 2 月 28 日）
+  function birthdayIn(p, year) {
+    var d = p.d;
+    if (p.m === 2 && p.d === 29 && !isLeap(year)) d = 28;
+    return { y: year, m: p.m, d: d };
+  }
+
+  // 算下一个生日；档案没填生日就返回 null
+  function getBirthdayStatus() {
+    if (!pet || !pet.birthday) return null;
+    var p = parseDate(pet.birthday);
+    if (!p) return null;
+    var today = todayNum();
+    var year = new Date().getFullYear();
+    var cand = birthdayIn(p, year);
+    if (dateNum(cand.y, cand.m, cand.d) < today) cand = birthdayIn(p, year + 1);
+    var diff = dateNum(cand.y, cand.m, cand.d) - today;
+    var dateStr = fmtDate(cand.y, cand.m, cand.d);
+    if (diff === 0) {
+      return { kind: "today", days: 0, date: dateStr, text: "今天生日，生日快乐 🎉" };
+    }
+    if (diff <= 30) {
+      return { kind: "soon", days: diff, date: dateStr, text: "还有 " + diff + " 天" };
+    }
+    return { kind: "normal", days: diff, date: dateStr, text: "还有 " + diff + " 天" };
+  }
+
+  // ---------- 通知栏：收集需要关注的事项并排序 ----------
+  // 顺序：已过期（rank 0）> 30 天内到期（rank 1）> 30 天内生日（rank 2）
+  function buildNotices() {
+    var list = [];
+    if (!pet || !reminders) return list;
+
+    for (var i = 0; i < reminders.length; i++) {
+      var r = reminders[i];
+      var st = getItemStatus(r);
+      if (st.kind === "overdue") {
+        list.push({ rank: 0, sort: -st.days, name: r.name, color: "red", text: st.text, id: r.id });
+      } else if (st.kind === "soon") {
+        list.push({ rank: 1, sort: st.days, name: r.name, color: "yellow", text: st.text, id: r.id });
+      }
+    }
+
+    var b = getBirthdayStatus();
+    if (b && (b.kind === "today" || b.kind === "soon")) {
+      list.push({ rank: 2, sort: b.days, name: "🎂 生日", color: "green", text: b.text, id: null });
+    }
+
+    list.sort(function (a, c) {
+      return (a.rank - c.rank) || (a.sort - c.sort);
+    });
+    return list;
+  }
+
+  // ---------- 画提醒页 ----------
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+
+  // 步骤 4.8：当前时间范围之外还有记录时，提示一下，并给一个"查看全部"按钮
+  function renderOutsideHint(box, outside, picker, rerender) {
+    box.innerHTML = "";
+    if (outside <= 0) { box.hidden = true; return; }
+    box.hidden = false;
+    box.appendChild(el("span", "", "还有 " + outside + " 条记录不在当前时间范围内，所以没有显示在下面。"));
+    var b = el("button", "btn-soft outside-btn", "查看全部");
+    b.type = "button";
+    b.addEventListener("click", function () {
+      picker.setAll();
+      rerender();
+    });
+    box.appendChild(b);
+  }
+
+  function renderReminders() {
+    // 有档案但还没有提醒项数据时，补上默认三项
+    if (pet && !reminders) {
+      reminders = defaultReminders();
+      if (!corrupt.reminders) saveReminders();   // 步骤 4.6a：提醒数据损坏时只放内存，不覆盖原始数据
+    }
+
+    var notices = buildNotices();
+
+    // 导航栏上的小红点数字（0 不显示）
+    var badge = document.getElementById("badge");
+    if (notices.length > 0) {
+      badge.textContent = String(notices.length);
+      badge.hidden = false;
+    } else {
+      badge.hidden = true;
+    }
+
+    var noPetBox = document.getElementById("reminderNoPet");
+    var mainBox = document.getElementById("reminderMain");
+    if (!pet || !reminders) {
+      noPetBox.hidden = false;
+      mainBox.hidden = true;
+      return;
+    }
+    noPetBox.hidden = true;
+    mainBox.hidden = false;
+
+    renderNotices(notices);
+    renderItemList();
+  }
+
+  function renderNotices(notices) {
+    var box = document.getElementById("noticeList");
+    box.innerHTML = "";
+
+    if (notices.length === 0) {
+      box.appendChild(el("div", "notice-empty", "目前没有待办提醒 ✅"));
+      return;
+    }
+
+    notices.forEach(function (n) {
+      var row = el("div", "notice notice-" + n.color);
+      var left = el("div", "notice-text");
+      left.appendChild(el("div", "notice-name", n.name));
+      left.appendChild(el("div", "notice-status", n.text));
+      row.appendChild(left);
+
+      if (n.id) {   // 生日没有「已处理」按钮
+        var btn = el("button", "btn-soft handled-btn", "✅ 已处理");
+        btn.type = "button";
+        btn.addEventListener("click", function () { openHandle(n.id); });
+        row.appendChild(btn);
+      }
+      box.appendChild(row);
+    });
+  }
+
+  function renderItemList() {
+    var box = document.getElementById("itemList");
+    box.innerHTML = "";
+
+    var b = getBirthdayStatus();
+    if (b) box.appendChild(buildBirthdayRow(b));
+
+    reminders.forEach(function (r) {
+      box.appendChild(buildItemRow(r));
+    });
+
+    if (!b && reminders.length === 0) {
+      box.appendChild(el("div", "list-empty", "还没有提醒项目，点下面的按钮新增。"));
+    }
+  }
+
+  function buildBirthdayRow(b) {
+    var row = el("div", "item");
+    row.appendChild(el("div", "item-name", "🎂 生日"));
+    row.appendChild(el("div", "item-line", "下一个生日：" + b.date));
+    if (b.kind === "today" || b.kind === "soon") {
+      row.appendChild(el("span", "tag tag-green", b.text));
+    } else {
+      row.appendChild(el("div", "item-line", b.text));
+    }
+
+    // 步骤 4.5：📅 加到日历（生日只能手动导出）
+    var calRow = el("div", "cal-row");
+    var calBtn = el("button", "btn-soft cal-btn", "📅 加到日历");
+    calBtn.type = "button";
+    calBtn.addEventListener("click", function () { openCalDialog({ type: "birthday" }); });
+    calRow.appendChild(calBtn);
+    row.appendChild(calRow);
+
+    row.appendChild(el("div", "item-note", "来自档案，不能在这里编辑或删除"));
+    return row;
+  }
+
+  function buildItemRow(r) {
+    var st = getItemStatus(r);
+    var row = el("div", "item");
+    row.appendChild(el("div", "item-name", r.name));
+
+    var p = parseDate(r.lastDate);
+    row.appendChild(el("div", "item-line", "上次日期：" + (p ? r.lastDate : "未填写")));
+    row.appendChild(el("div", "item-line", "周期：" + cycleLabel(r.cycle)));
+
+    if (st.kind === "overdue") {
+      row.appendChild(el("span", "tag tag-red", st.text));
+    } else if (st.kind === "soon") {
+      row.appendChild(el("span", "tag tag-yellow", st.text));
+    }
+    if (st.kind === "overdue" || st.kind === "soon" || st.kind === "normal") {
+      row.appendChild(el("div", "item-line", "下次日期：" + st.next));
+    }
+
+    // 步骤 4.5：📅 加到日历（没有可用的下次日期时置灰；已过期的旁边提示先更新）
+    var calRow = el("div", "cal-row");
+    var calBtn = el("button", "btn-soft cal-btn", "📅 加到日历");
+    calBtn.type = "button";
+    if (st.kind === "soon" || st.kind === "normal") {
+      calBtn.addEventListener("click", function () { openCalDialog({ type: "item", id: r.id }); });
+    } else {
+      calBtn.disabled = true;
+    }
+    calRow.appendChild(calBtn);
+    if (st.kind === "overdue") {
+      calRow.appendChild(el("span", "cal-small", "请先更新上次日期"));
+    }
+    row.appendChild(calRow);
+
+    var btns = el("div", "item-btns");
+    var editBtn = el("button", "btn-soft", "✏️ 编辑");
+    editBtn.type = "button";
+    editBtn.addEventListener("click", function () { openItemForm(r.id); });
+    var delBtn = el("button", "btn-danger", "🗑️ 删除");
+    delBtn.type = "button";
+    delBtn.addEventListener("click", function () { deleteItem(r.id); });
+    btns.appendChild(editBtn);
+    btns.appendChild(delBtn);
+    row.appendChild(btns);
+    return row;
+  }
+
+  // ---------- 弹出输入框 ----------
+  function showModal(which) {
+    modalMask.hidden = false;
+    handleForm.hidden = which !== "handle";
+    itemForm.hidden = which !== "item";
+  }
+
+  function closeModal() {
+    modalMask.hidden = true;
+    handleForm.hidden = true;
+    itemForm.hidden = true;
+  }
+
+  // 「已处理」：填新的上次日期，默认今天
+  function openHandle(id) {
+    var item = findItem(id);
+    if (!item) return;
+    handlingId = id;
+    document.getElementById("handleTitle").textContent = "已处理：" + item.name;
+    handleDate.value = todayString();
+    handleDate.max = todayString();
+    handleError.hidden = true;
+    showModal("handle");
+  }
+
+  handleForm.addEventListener("submit", function (event) {
+    event.preventDefault();
+    var v = handleDate.value;
+    if (!parseDate(v)) {
+      handleError.textContent = "请选择日期。";
+      handleError.hidden = false;
+      return;
+    }
+    if (v > todayString()) {
+      handleError.textContent = "上次日期不能晚于今天。";
+      handleError.hidden = false;
+      return;
+    }
+    var item = findItem(handlingId);
+    if (!item) { closeModal(); renderReminders(); return; }
+    var old = item.lastDate;
+    item.lastDate = v;
+    if (!saveReminders()) {
+      item.lastDate = old;
+      handleError.textContent = "保存失败：浏览器存储空间可能已满，或浏览器禁用了本地存储。";
+      handleError.hidden = false;
+      return;
+    }
+    var doneId = handlingId;
+    closeModal();
+    renderReminders();   // 重新计算；还在 30 天内的会继续留在通知栏
+    maybePromptCalendar(doneId);   // 步骤 4.5：可以导出时，询问是否加到日历
+  });
+
+  document.getElementById("handleCancel").addEventListener("click", closeModal);
+
+  // 新增 / 编辑项目
+  function openItemForm(id) {
+    editingId = id || null;
+    itemError.hidden = true;
+    itemLast.max = todayString();
+    if (id) {
+      var item = findItem(id);
+      if (!item) return;
+      document.getElementById("itemFormTitle").textContent = "✏️ 编辑项目";
+      itemName.value = item.name;
+      itemLast.value = parseDate(item.lastDate) ? item.lastDate : "";
+      itemCycle.value = String(item.cycle);
+    } else {
+      document.getElementById("itemFormTitle").textContent = "➕ 新增项目";
+      itemName.value = "";
+      itemLast.value = "";
+      itemCycle.value = "12";
+    }
+    showModal("item");
+  }
+
+  function showItemError(msg) {
+    itemError.textContent = msg;
+    itemError.hidden = false;
+  }
+
+  itemForm.addEventListener("submit", function (event) {
+    event.preventDefault();
+
+    var name = itemName.value.trim();
+    if (!name) { showItemError("请填写项目名称。"); itemName.focus(); return; }
+    var last = itemLast.value;
+    if (last && last > todayString()) { showItemError("上次日期不能晚于今天。"); return; }
+    var cycle = Number(itemCycle.value);
+    var savedId = editingId;   // 步骤 4.5：记下保存的是哪一项
+
+    if (editingId) {
+      var item = findItem(editingId);
+      if (!item) { closeModal(); renderReminders(); return; }
+      var oldName = item.name, oldLast = item.lastDate, oldCycle = item.cycle;
+      item.name = name;
+      item.lastDate = last;
+      item.cycle = cycle;
+      if (!saveReminders()) {
+        item.name = oldName;
+        item.lastDate = oldLast;
+        item.cycle = oldCycle;
+        showItemError("保存失败：浏览器存储空间可能已满，或浏览器禁用了本地存储。");
+        return;
+      }
+    } else {
+      var newRec = { id: newId(), name: name, lastDate: last, cycle: cycle };
+      reminders.push(newRec);
+      if (!saveReminders()) {
+        reminders.pop();
+        showItemError("保存失败：浏览器存储空间可能已满，或浏览器禁用了本地存储。");
+        return;
+      }
+      savedId = newRec.id;
+    }
+    closeModal();
+    renderReminders();
+    maybePromptCalendar(savedId);   // 步骤 4.5：可以导出时，询问是否加到日历
+  });
+
+  document.getElementById("itemCancel").addEventListener("click", closeModal);
+
+  document.getElementById("addItemBtn").addEventListener("click", function () {
+    openItemForm(null);
+  });
+
+  function deleteItem(id) {
+    var item = findItem(id);
+    if (!item) return;
+    if (!confirm("确定要删除「" + item.name + "」吗？删除后无法恢复。")) return;
+    var old = reminders;
+    reminders = reminders.filter(function (r) { return r.id !== id; });
+    if (!saveReminders()) {
+      reminders = old;
+      alert("删除失败：浏览器存储空间可能已满，或浏览器禁用了本地存储。");
+      return;
+    }
+    renderReminders();
+  }
+
+  // ---------- 底部导航切换（步骤 4.2：从四个标签改成五个标签） ----------
+  function showTab(name) {
+    pageProfile.hidden = name !== "profile";
+    pageReminder.hidden = name !== "reminder";
+    pageExpense.hidden = name !== "expense";
+    pageWeight.hidden = name !== "weight";
+    pageDiary.hidden = name !== "diary";
+    tabProfileBtn.className = "tab-btn" + (name === "profile" ? " active" : "");
+    tabReminderBtn.className = "tab-btn" + (name === "reminder" ? " active" : "");
+    tabExpenseBtn.className = "tab-btn" + (name === "expense" ? " active" : "");
+    tabWeightBtn.className = "tab-btn" + (name === "weight" ? " active" : "");
+    tabDiaryBtn.className = "tab-btn" + (name === "diary" ? " active" : "");
+    if (name === "reminder") renderReminders();
+    if (name === "expense") renderExpenses();
+    if (name === "weight") renderWeights();
+    if (name === "diary") renderDiary();
+    try { sessionStorage.setItem(TAB_KEY, name); } catch (e) {}   // 步骤 4.10：记住现在在哪个标签页，刷新后回到这里
+    window.scrollTo(0, 0);
+  }
+
+  tabProfileBtn.addEventListener("click", function () { showTab("profile"); });
+  tabReminderBtn.addEventListener("click", function () { showTab("reminder"); });
+
+  // 页面隔夜没关时，回到页面自动重新计算提醒
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) renderReminders();
+  });
+
+
+  // =====================================================
+  //        步骤 3：时间范围选择器（可复用，体重页也会用）
+  // =====================================================
+  //
+  // 用法：
+  //   var picker = createRangePicker(某个空的 div, 范围变化时要执行的函数);
+  //   picker.inRange("2026-05-20")  → 这个日期在当前选中的范围内吗（true/false）
+  //   picker.getRange()             → {start, end}，都是 "YYYY-MM-DD"；选"全部"时都是 null
+  //   picker.refresh(最早年份, 最晚年份) → 重新画年份下拉和提示文字
+  //   picker.setAll()               → （步骤 4.8 新增）切换成"全部"，调用后要自己重新画页面
+  //
+  // 它只负责"选范围"，不碰任何已保存的数据。
+  // 每个选择器各自记住自己的选择，所以体重页再调用一次就是一个独立的选择器。
+
+  // 从某个日期往前推 n 个月；月末取当月最后一天（3 月 31 日 - 1 个月 = 2 月 28/29 日）
+  function subMonths(p, n) {
+    var total = p.y * 12 + (p.m - 1) - n;
+    var y = Math.floor(total / 12);
+    var m = (total % 12) + 1;
+    return { y: y, m: m, d: Math.min(p.d, daysInMonth(y, m)) };
+  }
+
+  function createRangePicker(container, onChange) {
+    var now = new Date();
+    var nowY = now.getFullYear();
+    var nowM = now.getMonth() + 1;
+
+    // 当前选择：all 全部 / recent 最近 N 个月 / custom 自选
+    var state = { mode: "all", n: 0, sy: nowY, sm: nowM, ey: nowY, em: nowM };
+
+    var quicks = [
+      { label: "最近 1 个月", mode: "recent", n: 1 },
+      { label: "最近 3 个月", mode: "recent", n: 3 },
+      { label: "最近 6 个月", mode: "recent", n: 6 },
+      { label: "全部", mode: "all", n: 0 }
+    ];
+
+    container.innerHTML = "";
+
+    var errorBox = el("div", "error");
+    errorBox.hidden = true;
+    var rangeText = el("div", "range-text");
+
+    // ----- 快捷按钮 -----
+    var quickBtns = [];
+    var btnBox = el("div", "range-btns");
+    quicks.forEach(function (q) {
+      var b = el("button", "range-btn", q.label);
+      b.type = "button";
+      b.addEventListener("click", function () {
+        state.mode = q.mode;
+        state.n = q.n;
+        errorBox.hidden = true;
+        updateView();
+        onChange();
+      });
+      btnBox.appendChild(b);
+      quickBtns.push({ btn: b, q: q });
+    });
+    container.appendChild(btnBox);
+
+    // ----- 自选月份 -----
+    container.appendChild(el("div", "range-title", "自选月份范围"));
+
+    function makeSelect(label) {
+      var s = document.createElement("select");
+      s.setAttribute("aria-label", label);
+      return s;
+    }
+    var sYear = makeSelect("开始年份");
+    var sMonth = makeSelect("开始月份");
+    var eYear = makeSelect("结束年份");
+    var eMonth = makeSelect("结束月份");
+
+    [sMonth, eMonth].forEach(function (sel) {
+      for (var m = 1; m <= 12; m++) {
+        var o = document.createElement("option");
+        o.value = String(m);
+        o.textContent = m + " 月";
+        sel.appendChild(o);
+      }
+    });
+    sMonth.value = String(state.sm);
+    eMonth.value = String(state.em);
+
+    var startRow = el("div", "range-row");
+    startRow.appendChild(el("span", "range-label", "开始"));
+    startRow.appendChild(sYear);
+    startRow.appendChild(sMonth);
+    var endRow = el("div", "range-row");
+    endRow.appendChild(el("span", "range-label", "结束"));
+    endRow.appendChild(eYear);
+    endRow.appendChild(eMonth);
+    container.appendChild(startRow);
+    container.appendChild(endRow);
+
+    var applyBtn = el("button", "btn-main range-apply", "应用");
+    applyBtn.type = "button";
+    applyBtn.addEventListener("click", function () {
+      var sy = Number(sYear.value), sm = Number(sMonth.value);
+      var ey = Number(eYear.value), em = Number(eMonth.value);
+      if (sy * 12 + sm > ey * 12 + em) {
+        errorBox.textContent = "开始月份不能晚于结束月份";
+        errorBox.hidden = false;
+        return;   // 不应用，保持原来的范围
+      }
+      errorBox.hidden = true;
+      state.mode = "custom";
+      state.sy = sy; state.sm = sm; state.ey = ey; state.em = em;
+      updateView();
+      onChange();
+    });
+    container.appendChild(applyBtn);
+    container.appendChild(errorBox);
+    container.appendChild(rangeText);
+
+    // ----- 年份下拉（范围随数据变化，新的年份在上面） -----
+    function fillYears(sel, lo, hi, selected) {
+      sel.innerHTML = "";
+      for (var y = hi; y >= lo; y--) {
+        var o = document.createElement("option");
+        o.value = String(y);
+        o.textContent = y + " 年";
+        sel.appendChild(o);
+      }
+      sel.value = String(selected);
+    }
+
+    function setYearBounds(lo, hi) {
+      var curS = Number(sYear.value) || state.sy;
+      var curE = Number(eYear.value) || state.ey;
+      var low = Math.min(lo, nowY - 5, curS, curE, state.sy, state.ey);
+      var high = Math.max(hi, nowY + 1, curS, curE, state.sy, state.ey);
+      fillYears(sYear, low, high, curS);
+      fillYears(eYear, low, high, curE);
+    }
+
+    // ----- 算范围（每次都按"今天"现算，页面开着过夜也不会错） -----
+    function getRange() {
+      if (state.mode === "all") return { start: null, end: null };
+      if (state.mode === "recent") {
+        var t = parseDate(todayString());
+        var s = subMonths(t, state.n);
+        return { start: fmtDate(s.y, s.m, s.d), end: todayString() };
+      }
+      return {
+        start: fmtDate(state.sy, state.sm, 1),
+        end: fmtDate(state.ey, state.em, daysInMonth(state.ey, state.em))
+      };
+    }
+
+    function inRange(dateStr) {
+      var r = getRange();
+      if (r.start && dateStr < r.start) return false;
+      if (r.end && dateStr > r.end) return false;
+      return true;
+    }
+
+    function updateView() {
+      quickBtns.forEach(function (x) {
+        var on = state.mode === x.q.mode && (x.q.mode === "all" || state.n === x.q.n);
+        x.btn.className = "range-btn" + (on ? " active" : "");
+        x.btn.setAttribute("aria-pressed", on ? "true" : "false");
+      });
+      var r = getRange();
+      rangeText.textContent = r.start ? "当前范围：" + r.start + " 至 " + r.end : "当前范围：全部";
+    }
+
+    setYearBounds(nowY - 5, nowY + 1);
+    updateView();
+
+    return {
+      getRange: getRange,
+      inRange: inRange,
+      refresh: function (minYear, maxYear) {
+        setYearBounds(minYear, maxYear);
+        updateView();
+      },
+      // 步骤 4.8 新增：切换成"全部"（只改选择，不碰数据；调用的地方负责重新画页面）
+      setAll: function () {
+        state.mode = "all";
+        state.n = 0;
+        errorBox.hidden = true;
+        updateView();
+      }
+    };
+  }
+
+
+  // =====================================================
+  //                  步骤 3：开销（新增）
+  // =====================================================
+
+  var EXPENSE_KEY = "petExpenses_v1";    // 和档案、提醒分开存
+  var EXPENSE_CATEGORIES = ["粮食", "医疗", "洗护", "玩具", "其他"];
+  var EXPENSE_ICONS = { "粮食": "🍖", "医疗": "🏥", "洗护": "🛁", "玩具": "🧸", "其他": "📦" };
+  var expenses = loadExpenses();         // 开销列表（金额用"分"的整数保存，避免小数误差）
+  var editingExpenseId = null;           // 正在编辑的开销 id（新增时是 null）
+
+  var pageExpense = document.getElementById("pageExpense");
+  var tabExpenseBtn = document.getElementById("tabExpenseBtn");
+  var expenseMask = document.getElementById("expenseMask");
+  var expenseForm = document.getElementById("expenseForm");
+  var expDate = document.getElementById("expDate");
+  var expAmount = document.getElementById("expAmount");
+  var expCategory = document.getElementById("expCategory");
+  var expNote = document.getElementById("expNote");
+  var expError = document.getElementById("expError");
+
+  // ---------- 读取 / 保存 ----------
+  function loadExpenses() {
+    var text;
+    try {
+      text = localStorage.getItem(EXPENSE_KEY);
+    } catch (err) {
+      corrupt.expenses = true;
+      return [];
+    }
+    if (text === null) return [];
+    try {
+      var arr = JSON.parse(text);
+      if (!Array.isArray(arr)) { corrupt.expenses = true; return []; }
+      var out = [];
+      for (var i = 0; i < arr.length; i++) {
+        var e = arr[i];
+        if (!e || !parseDate(e.date)) { corrupt.expenses = true; continue; }
+        var c = e.cents;
+        if (typeof c !== "number" || !isFinite(c) || c <= 0 || Math.floor(c) !== c) { corrupt.expenses = true; continue; }
+        out.push({
+          id: String(e.id || newId()),
+          date: e.date,
+          cents: c,
+          category: EXPENSE_CATEGORIES.indexOf(e.category) >= 0 ? e.category : "其他",
+          note: typeof e.note === "string" ? e.note : ""
+        });
+      }
+      return out;
+    } catch (err) {
+      corrupt.expenses = true;
+      return [];
+    }
+  }
+
+  function saveExpenses() {
+    try {
+      localStorage.setItem(EXPENSE_KEY, JSON.stringify(expenses));
+    } catch (err) {
+      return false;
+    }
+    markOk("expenses");
+    return true;
+  }
+
+  function findExpense(id) {
+    for (var i = 0; i < expenses.length; i++) {
+      if (expenses[i].id === id) return expenses[i];
+    }
+    return null;
+  }
+
+  // ---------- 金额工具 ----------
+  // 3550 -> "¥35.50"
+  function fmtMoney(cents) {
+    return "¥" + Math.floor(cents / 100) + "." + pad2(cents % 100);
+  }
+
+  // 3550 -> "35.50"（填进输入框用）
+  function centsToInput(cents) {
+    return Math.floor(cents / 100) + "." + pad2(cents % 100);
+  }
+
+  // 把输入的文字变成"分"；不合格返回 {error: "提示文字"}
+  function parseAmountToCents(text) {
+    var s = String(text).trim();
+    if (s === "") return { error: "请填写金额。" };
+    if (s.charAt(0) === "-") return { error: "金额必须大于 0。" };
+    if (!/^\d{1,8}(\.\d{1,2})?$/.test(s)) {
+      return { error: "金额格式不对：请输入数字，最多两位小数，例如 35.50。" };
+    }
+    var parts = s.split(".");
+    var cents = Number(parts[0]) * 100 + (parts[1] ? Number((parts[1] + "0").slice(0, 2)) : 0);
+    if (cents <= 0) return { error: "金额必须大于 0。" };
+    return { cents: cents };
+  }
+
+  // ---------- 画开销页 ----------
+  function renderExpenses() {
+    var noPetBox = document.getElementById("expenseNoPet");
+    var mainBox = document.getElementById("expenseMain");
+    if (!pet) {
+      noPetBox.hidden = false;
+      mainBox.hidden = true;
+      return;
+    }
+    noPetBox.hidden = true;
+    mainBox.hidden = false;
+
+    // 让年份下拉覆盖到所有记录的年份
+    var nowY = new Date().getFullYear();
+    var lo = nowY - 5, hi = nowY + 1;
+    expenses.forEach(function (e) {
+      var y = Number(e.date.slice(0, 4));
+      if (y >= 1970 && y <= 2100) {
+        if (y < lo) lo = y;
+        if (y > hi) hi = y;
+      }
+    });
+    expensePicker.refresh(lo, hi);
+
+    // 只筛选显示，不改动 expenses 里的数据
+    var inList = expenses.filter(function (e) { return expensePicker.inRange(e.date); });
+    renderOutsideHint(document.getElementById("expenseOutside"), expenses.length - inList.length, expensePicker, renderExpenses);
+    renderExpenseStats(inList);
+    renderExpenseList(inList);
+  }
+
+  function renderExpenseStats(list) {
+    var box = document.getElementById("expenseStats");
+    box.innerHTML = "";
+
+    var total = 0;
+    var byCat = {};
+    var byMonth = {};
+    list.forEach(function (e) {
+      total += e.cents;
+      byCat[e.category] = (byCat[e.category] || 0) + e.cents;
+      var key = e.date.slice(0, 7);
+      byMonth[key] = (byMonth[key] || 0) + e.cents;
+    });
+
+    box.appendChild(el("div", "stat-total", "总花费 " + fmtMoney(total)));
+
+    if (list.length === 0) return;   // 没记录：只显示 ¥0.00
+
+    // 各类别：金额从大到小，没有花费的不显示
+    var cats = [];
+    EXPENSE_CATEGORIES.forEach(function (name) {
+      if (byCat[name]) cats.push({ name: name, cents: byCat[name] });
+    });
+    cats.sort(function (a, b) { return b.cents - a.cents; });
+
+    box.appendChild(el("div", "stat-sub", "各类别"));
+    cats.forEach(function (c) {
+      var pct = (c.cents / total * 100).toFixed(1);
+      var row = el("div", "stat-row");
+      row.appendChild(el("span", "", EXPENSE_ICONS[c.name] + " " + c.name));
+      row.appendChild(el("span", "", fmtMoney(c.cents) + "（" + pct + "%）"));
+      box.appendChild(row);
+    });
+
+    // 按月统计：从新到旧
+    var months = Object.keys(byMonth).sort().reverse();
+    box.appendChild(el("div", "stat-sub", "按月统计"));
+    months.forEach(function (key) {
+      var row = el("div", "stat-row");
+      row.appendChild(el("span", "", key.slice(0, 4) + " 年 " + Number(key.slice(5)) + " 月"));
+      row.appendChild(el("span", "", fmtMoney(byMonth[key])));
+      box.appendChild(row);
+    });
+  }
+
+  function renderExpenseList(list) {
+    var box = document.getElementById("expenseList");
+    box.innerHTML = "";
+
+    if (expenses.length === 0) {
+      box.appendChild(el("div", "list-empty", "💰 还没有开销记录，记下第一笔吧"));
+      return;
+    }
+    if (list.length === 0) {
+      box.appendChild(el("div", "list-empty", "这段时间没有开销记录"));
+      return;
+    }
+
+    // 日期从新到旧；同一天的，后记的排前面
+    var sorted = list.map(function (e) {
+      return { e: e, idx: expenses.indexOf(e) };
+    });
+    sorted.sort(function (a, b) {
+      if (a.e.date !== b.e.date) return a.e.date < b.e.date ? 1 : -1;
+      return b.idx - a.idx;
+    });
+
+    sorted.forEach(function (x) {
+      box.appendChild(buildExpenseRow(x.e));
+    });
+  }
+
+  function buildExpenseRow(e) {
+    var row = el("div", "item");
+
+    var top = el("div", "exp-top");
+    top.appendChild(el("span", "exp-date", e.date));
+    top.appendChild(el("span", "exp-amount", fmtMoney(e.cents)));
+    row.appendChild(top);
+
+    row.appendChild(el("div", "item-line", EXPENSE_ICONS[e.category] + " " + e.category));
+    if (e.note) row.appendChild(el("div", "item-line", "📝 " + e.note));
+
+    var btns = el("div", "item-btns");
+    var editBtn = el("button", "btn-soft", "✏️ 编辑");
+    editBtn.type = "button";
+    editBtn.addEventListener("click", function () { openExpenseForm(e.id); });
+    var delBtn = el("button", "btn-danger", "🗑️ 删除");
+    delBtn.type = "button";
+    delBtn.addEventListener("click", function () { deleteExpense(e.id); });
+    btns.appendChild(editBtn);
+    btns.appendChild(delBtn);
+    row.appendChild(btns);
+    return row;
+  }
+
+  // ---------- 新增 / 编辑 / 删除 ----------
+  function showExpError(msg) {
+    expError.textContent = msg;
+    expError.hidden = false;
+  }
+
+  function closeExpenseModal() {
+    expenseMask.hidden = true;
+  }
+
+  function openExpenseForm(id) {
+    editingExpenseId = id || null;
+    expError.hidden = true;
+    expDate.max = todayString();   // 步骤 4.11：不能选今天之后的日期
+    if (id) {
+      var e = findExpense(id);
+      if (!e) return;
+      document.getElementById("expenseFormTitle").textContent = "✏️ 编辑开销";
+      expDate.value = e.date;
+      expAmount.value = centsToInput(e.cents);
+      expCategory.value = e.category;
+      expNote.value = e.note;
+    } else {
+      document.getElementById("expenseFormTitle").textContent = "➕ 记一笔";
+      expDate.value = todayString();   // 默认今天
+      expAmount.value = "";
+      expCategory.value = "粮食";
+      expNote.value = "";
+    }
+    expenseMask.hidden = false;
+  }
+
+  expenseForm.addEventListener("submit", function (event) {
+    event.preventDefault();
+
+    var date = expDate.value;
+    if (!parseDate(date)) { showExpError("请选择日期。"); return; }
+    if (date > todayString()) { showExpError("日期不能晚于今天。"); return; }   // 步骤 4.11
+
+    var r = parseAmountToCents(expAmount.value);
+    if (r.error) { showExpError(r.error); expAmount.focus(); return; }
+
+    var category = expCategory.value;
+    if (EXPENSE_CATEGORIES.indexOf(category) < 0) category = "其他";
+    var note = expNote.value.trim();
+
+    if (editingExpenseId) {
+      var e = findExpense(editingExpenseId);
+      if (!e) { closeExpenseModal(); renderExpenses(); return; }
+      var old = { date: e.date, cents: e.cents, category: e.category, note: e.note };
+      e.date = date; e.cents = r.cents; e.category = category; e.note = note;
+      if (!saveExpenses()) {
+        e.date = old.date; e.cents = old.cents; e.category = old.category; e.note = old.note;
+        showExpError("保存失败：浏览器存储空间可能已满，或浏览器禁用了本地存储。");
+        return;
+      }
+    } else {
+      expenses.push({ id: newId(), date: date, cents: r.cents, category: category, note: note });
+      if (!saveExpenses()) {
+        expenses.pop();
+        showExpError("保存失败：浏览器存储空间可能已满，或浏览器禁用了本地存储。");
+        return;
+      }
+    }
+    closeExpenseModal();
+    renderExpenses();
+  });
+
+  document.getElementById("expCancel").addEventListener("click", closeExpenseModal);
+
+  document.getElementById("addExpenseBtn").addEventListener("click", function () {
+    openExpenseForm(null);
+  });
+
+  function deleteExpense(id) {
+    var e = findExpense(id);
+    if (!e) return;
+    if (!confirm("确定要删除这笔开销吗（" + e.date + "，" + fmtMoney(e.cents) + "）？删除后无法恢复。")) return;
+    var old = expenses;
+    expenses = expenses.filter(function (x) { return x.id !== id; });
+    if (!saveExpenses()) {
+      expenses = old;
+      alert("删除失败：浏览器存储空间可能已满，或浏览器禁用了本地存储。");
+      return;
+    }
+    renderExpenses();
+  }
+
+  tabExpenseBtn.addEventListener("click", function () { showTab("expense"); });
+
+  // 页面隔夜没关时，回到页面自动重新计算"最近 N 个月"
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) renderExpenses();
+  });
+
+  // 时间范围选择器：整个页面只建一次，所以切换标签再回来，选择会保留
+  var expensePicker = createRangePicker(document.getElementById("expenseRange"), renderExpenses);
+
+
+  // =====================================================
+  //                  步骤 4：体重（新增）
+  // =====================================================
+
+  var WEIGHT_KEY = "petWeights_v1";      // 和档案、提醒、开销分开存
+  var weights = loadWeights();           // 体重列表（体重用"0.1 公斤"的整数保存：5.6 kg 存成 56，避免小数误差）
+  var editingWeightId = null;            // 正在编辑的体重 id（新增时是 null）
+
+  var pageWeight = document.getElementById("pageWeight");
+  var tabWeightBtn = document.getElementById("tabWeightBtn");
+  var weightMask = document.getElementById("weightMask");
+  var weightForm = document.getElementById("weightForm");
+  var wtDate = document.getElementById("wtDate");
+  var wtValue = document.getElementById("wtValue");
+  var wtError = document.getElementById("wtError");
+
+  // ---------- 读取 / 保存 ----------
+  function loadWeights() {
+    var text;
+    try {
+      text = localStorage.getItem(WEIGHT_KEY);
+    } catch (err) {
+      corrupt.weights = true;
+      return [];
+    }
+    if (text === null) return [];
+    try {
+      var arr = JSON.parse(text);
+      if (!Array.isArray(arr)) { corrupt.weights = true; return []; }
+      var out = [];
+      var indexByDate = {};
+      for (var i = 0; i < arr.length; i++) {
+        var w = arr[i];
+        if (!w || !parseDate(w.date)) { corrupt.weights = true; continue; }
+        var t = w.tenths;
+        if (typeof t !== "number" || !isFinite(t) || Math.floor(t) !== t || t <= 0 || t > 2000) { corrupt.weights = true; continue; }
+        var rec = { id: String(w.id || newId()), date: w.date, tenths: t };
+        // 同一天只保留一条（正常不会出现，这里只是防止数据被改坏）
+        if (indexByDate[w.date] !== undefined) {
+          out[indexByDate[w.date]] = rec;
+        } else {
+          indexByDate[w.date] = out.length;
+          out.push(rec);
+        }
+      }
+      return out;
+    } catch (err) {
+      corrupt.weights = true;
+      return [];
+    }
+  }
+
+  function saveWeights() {
+    try {
+      localStorage.setItem(WEIGHT_KEY, JSON.stringify(weights));
+    } catch (err) {
+      return false;
+    }
+    markOk("weights");
+    return true;
+  }
+
+  function findWeight(id) {
+    for (var i = 0; i < weights.length; i++) {
+      if (weights[i].id === id) return weights[i];
+    }
+    return null;
+  }
+
+  // ---------- 体重工具 ----------
+  // 56 -> "5.6"
+  function tenthsToText(t) {
+    return Math.floor(t / 10) + "." + (t % 10);
+  }
+
+  // 56 -> "5.6 kg"
+  function fmtWeight(t) {
+    return tenthsToText(t) + " kg";
+  }
+
+  // 变化量：带正负号，保留一位小数；0 显示 "0.0 kg"
+  function fmtChange(diff) {
+    var sign = diff > 0 ? "+" : (diff < 0 ? "-" : "");
+    var a = Math.abs(diff);
+    return sign + tenthsToText(a) + " kg";
+  }
+
+  // 把输入的文字变成"0.1 公斤"的整数；不合格返回 {error: "提示文字"}
+  function parseWeightToTenths(text) {
+    var s = String(text).trim();
+    if (s === "") return { error: "请填写体重。" };
+    if (s.charAt(0) === "-") return { error: "体重必须大于 0。" };
+    if (!/^\d+(\.\d+)?$/.test(s)) {
+      return { error: "体重格式不对：请输入数字，最多一位小数，例如 5.6。" };
+    }
+    var parts = s.split(".");
+    if (parts[1] && parts[1].length > 1) {
+      return { error: "体重最多一位小数，例如 5.6。" };
+    }
+    var tenths = Number(parts[0]) * 10 + (parts[1] ? Number(parts[1]) : 0);
+    if (tenths <= 0) return { error: "体重必须大于 0。" };
+    if (tenths > 2000) return { error: "体重不能超过 200 kg。" };
+    return { tenths: tenths };
+  }
+
+  // ---------- 画体重页 ----------
+  function renderWeights() {
+    var noPetBox = document.getElementById("weightNoPet");
+    var mainBox = document.getElementById("weightMain");
+    if (!pet) {
+      noPetBox.hidden = false;
+      mainBox.hidden = true;
+      return;
+    }
+    noPetBox.hidden = true;
+    mainBox.hidden = false;
+
+    // 让年份下拉覆盖到所有记录的年份
+    var nowY = new Date().getFullYear();
+    var lo = nowY - 5, hi = nowY + 1;
+    weights.forEach(function (w) {
+      var y = Number(w.date.slice(0, 4));
+      if (y >= 1970 && y <= 2100) {
+        if (y < lo) lo = y;
+        if (y > hi) hi = y;
+      }
+    });
+    weightPicker.refresh(lo, hi);
+
+    // 只筛选显示，不改动 weights 里的数据；按日期从旧到新排好（画图用）
+    var asc = weights.filter(function (w) { return weightPicker.inRange(w.date); });
+    asc.sort(function (a, b) { return a.date < b.date ? -1 : (a.date > b.date ? 1 : 0); });
+
+    renderOutsideHint(document.getElementById("weightOutside"), weights.length - asc.length, weightPicker, renderWeights);
+    renderWeightSummary(asc);
+    renderWeightList(asc);
+  }
+
+  function renderWeightSummary(asc) {
+    var box = document.getElementById("weightSummary");
+    box.innerHTML = "";
+
+    if (asc.length === 0) {
+      box.appendChild(el("div", "list-empty", "这段时间没有体重记录"));
+      return;
+    }
+    if (asc.length === 1) {
+      box.appendChild(el("div", "list-empty", "这段时间记录不足，无法比较"));
+      return;
+    }
+
+    var first = asc[0];
+    var last = asc[asc.length - 1];
+
+    var r1 = el("div", "stat-row");
+    r1.appendChild(el("span", "", "起始体重（" + first.date + "）"));
+    r1.appendChild(el("span", "", fmtWeight(first.tenths)));
+    box.appendChild(r1);
+
+    var r2 = el("div", "stat-row");
+    r2.appendChild(el("span", "", "最新体重（" + last.date + "）"));
+    r2.appendChild(el("span", "", fmtWeight(last.tenths)));
+    box.appendChild(r2);
+
+    var r3 = el("div", "stat-row");
+    r3.appendChild(el("span", "", "变化量"));
+    r3.appendChild(el("span", "", fmtChange(last.tenths - first.tenths)));
+    box.appendChild(r3);
+
+    buildWeightChart(asc, box);
+  }
+
+  function renderWeightList(asc) {
+    var card = document.getElementById("weightListCard");
+    var box = document.getElementById("weightList");
+    box.innerHTML = "";
+
+    if (asc.length === 0) {
+      card.hidden = true;   // 没有记录时，提示已经显示在上面，这里整块隐藏
+      return;
+    }
+    card.hidden = false;
+
+    // 日期从新到旧（同一天只有一条，不会并列）
+    for (var i = asc.length - 1; i >= 0; i--) {
+      box.appendChild(buildWeightRow(asc[i]));
+    }
+  }
+
+  function buildWeightRow(w) {
+    var row = el("div", "item");
+
+    var top = el("div", "exp-top");
+    top.appendChild(el("span", "exp-date", w.date));
+    top.appendChild(el("span", "exp-amount", fmtWeight(w.tenths)));
+    row.appendChild(top);
+
+    var btns = el("div", "item-btns");
+    var editBtn = el("button", "btn-soft", "✏️ 编辑");
+    editBtn.type = "button";
+    editBtn.addEventListener("click", function () { openWeightForm(w.id); });
+    var delBtn = el("button", "btn-danger", "🗑️ 删除");
+    delBtn.type = "button";
+    delBtn.addEventListener("click", function () { deleteWeight(w.id); });
+    btns.appendChild(editBtn);
+    btns.appendChild(delBtn);
+    row.appendChild(btns);
+    return row;
+  }
+
+  // ---------- 折线图（手写 SVG） ----------
+  function svgEl(tag, attrs) {
+    var e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for (var k in attrs) {
+      if (Object.prototype.hasOwnProperty.call(attrs, k)) e.setAttribute(k, attrs[k]);
+    }
+    return e;
+  }
+
+  // asc：范围内的记录，已按日期从旧到新排好，至少 2 条、日期互不相同
+  function buildWeightChart(asc, container) {
+    // 画布大小用 viewBox 固定比例，实际宽度 100% 自适应
+    var W = 300, H = 220;
+    var L = 52, R = 284, T = 16, B = 186;   // 绘图区的左、右、上、下边界
+
+    var minT = asc[0].tenths, maxT = asc[0].tenths;
+    asc.forEach(function (w) {
+      if (w.tenths < minT) minT = w.tenths;
+      if (w.tenths > maxT) maxT = w.tenths;
+    });
+
+    // 纵轴范围：上下各留边距；所有体重相同时用固定边距，避免除以 0
+    var pad = (maxT === minT) ? 5 : (maxT - minT) * 0.15;
+    var yLo = minT - pad, yHi = maxT + pad;
+    function yOf(t) { return B - (t - yLo) / (yHi - yLo) * (B - T); }
+
+    // 横轴：按真实日期比例；日期互不相同，所以 xMax > xMin
+    function dn(w) { var p = parseDate(w.date); return dateNum(p.y, p.m, p.d); }
+    var xMin = dn(asc[0]), xMax = dn(asc[asc.length - 1]);
+    function xOf(w) { return L + (dn(w) - xMin) / (xMax - xMin) * (R - L); }
+
+    var svg = svgEl("svg", {
+      "class": "chart-svg",
+      "viewBox": "0 0 " + W + " " + H,
+      "role": "img",
+      "aria-label": "体重折线图"
+    });
+
+    // 坐标轴
+    svg.appendChild(svgEl("line", { x1: L, y1: T, x2: L, y2: B, stroke: "#d9cdbd", "stroke-width": 1 }));
+    svg.appendChild(svgEl("line", { x1: L, y1: B, x2: R, y2: B, stroke: "#d9cdbd", "stroke-width": 1 }));
+
+    // 纵轴：单位，以及最大值、最小值（虚线 + 文字）
+    var unit = svgEl("text", { x: 4, y: 11, "font-size": 11, fill: "#8a7d6e" });
+    unit.textContent = "kg";
+    svg.appendChild(unit);
+
+    var marks = (maxT === minT) ? [maxT] : [maxT, minT];
+    marks.forEach(function (t) {
+      var y = yOf(t);
+      svg.appendChild(svgEl("line", {
+        x1: L, y1: y, x2: R, y2: y,
+        stroke: "#eadfce", "stroke-width": 1, "stroke-dasharray": "3 3"
+      }));
+      var label = svgEl("text", {
+        x: L - 6, y: y, dy: "0.35em", "text-anchor": "end", "font-size": 11, fill: "#6b5f50"
+      });
+      label.textContent = tenthsToText(t);
+      svg.appendChild(label);
+    });
+
+    // 横轴：起止日期
+    var xs = svgEl("text", { x: L, y: B + 18, "text-anchor": "start", "font-size": 11, fill: "#6b5f50" });
+    xs.textContent = asc[0].date;
+    svg.appendChild(xs);
+    var xe = svgEl("text", { x: R, y: B + 18, "text-anchor": "end", "font-size": 11, fill: "#6b5f50" });
+    xe.textContent = asc[asc.length - 1].date;
+    svg.appendChild(xe);
+
+    // 折线
+    var pts = asc.map(function (w) { return xOf(w).toFixed(2) + "," + yOf(w.tenths).toFixed(2); }).join(" ");
+    svg.appendChild(svgEl("polyline", {
+      points: pts, fill: "none", stroke: "#d98f4e", "stroke-width": 2,
+      "stroke-linejoin": "round", "stroke-linecap": "round"
+    }));
+
+    // 点击后显示详情的文字区
+    var info = el("div", "chart-info", "👆 点击圆点查看日期和体重");
+
+    // 数据点：可见的小圆点 + 一个更大的透明圆（方便手指点）
+    var dots = [];
+    asc.forEach(function (w) {
+      var cx = xOf(w), cy = yOf(w.tenths);
+      var g = svgEl("g", { "class": "wt-dot", tabindex: "0", role: "button",
+        "aria-label": w.date + " " + fmtWeight(w.tenths) });
+      var dot = svgEl("circle", {
+        cx: cx, cy: cy, r: 4, fill: "#b5702f", stroke: "#fff", "stroke-width": 1.5
+      });
+      var hit = svgEl("circle", { cx: cx, cy: cy, r: 14, fill: "transparent" });
+      g.appendChild(dot);
+      g.appendChild(hit);
+      function select() {
+        dots.forEach(function (d) { d.setAttribute("r", 4); d.setAttribute("fill", "#b5702f"); });
+        dot.setAttribute("r", 6);
+        dot.setAttribute("fill", "#d9534f");
+        info.textContent = "📅 " + w.date + "　⚖️ " + fmtWeight(w.tenths);
+      }
+      g.addEventListener("click", select);
+      g.addEventListener("keydown", function (ev) {
+        if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); select(); }
+      });
+      dots.push(dot);
+      svg.appendChild(g);
+    });
+
+    container.appendChild(svg);
+    container.appendChild(info);
+  }
+
+  // ---------- 新增 / 编辑 / 删除 ----------
+  function showWtError(msg) {
+    wtError.textContent = msg;
+    wtError.hidden = false;
+  }
+
+  function closeWeightModal() {
+    weightMask.hidden = true;
+  }
+
+  function openWeightForm(id) {
+    editingWeightId = id || null;
+    wtError.hidden = true;
+    wtDate.max = todayString();   // 步骤 4.11：不能选今天之后的日期
+    if (id) {
+      var w = findWeight(id);
+      if (!w) return;
+      document.getElementById("weightFormTitle").textContent = "✏️ 编辑体重";
+      wtDate.value = w.date;
+      wtValue.value = tenthsToText(w.tenths);
+    } else {
+      document.getElementById("weightFormTitle").textContent = "➕ 记体重";
+      wtDate.value = todayString();   // 默认今天
+      wtValue.value = "";
+    }
+    weightMask.hidden = false;
+  }
+
+  weightForm.addEventListener("submit", function (event) {
+    event.preventDefault();
+
+    var date = wtDate.value;
+    if (!parseDate(date)) { showWtError("请选择日期。"); return; }
+    if (date > todayString()) { showWtError("日期不能晚于今天。"); return; }   // 步骤 4.11
+
+    var r = parseWeightToTenths(wtValue.value);
+    if (r.error) { showWtError(r.error); wtValue.focus(); return; }
+
+    // 同一天只保留一条：别的记录已占用这个日期时，先问是否覆盖
+    var existing = null;
+    for (var i = 0; i < weights.length; i++) {
+      if (weights[i].date === date && weights[i].id !== editingWeightId) existing = weights[i];
+    }
+    if (existing) {
+      if (!confirm("这一天已有体重记录，要覆盖吗？")) return;   // 取消：不保存，表单保持打开
+    }
+
+    var backup = JSON.stringify(weights);   // 保存失败时用来恢复
+
+    if (editingWeightId) {
+      var cur = findWeight(editingWeightId);
+      if (!cur) { closeWeightModal(); renderWeights(); return; }
+      if (existing) {
+        weights = weights.filter(function (w) { return w !== existing; });
+      }
+      cur.date = date;
+      cur.tenths = r.tenths;
+    } else if (existing) {
+      existing.tenths = r.tenths;
+    } else {
+      weights.push({ id: newId(), date: date, tenths: r.tenths });
+    }
+
+    if (!saveWeights()) {
+      weights = JSON.parse(backup);
+      showWtError("保存失败：浏览器存储空间可能已满，或浏览器禁用了本地存储。");
+      return;
+    }
+    closeWeightModal();
+    renderWeights();
+  });
+
+  document.getElementById("wtCancel").addEventListener("click", closeWeightModal);
+
+  document.getElementById("addWeightBtn").addEventListener("click", function () {
+    openWeightForm(null);
+  });
+
+  function deleteWeight(id) {
+    var w = findWeight(id);
+    if (!w) return;
+    if (!confirm("确定要删除这条体重记录吗（" + w.date + "，" + fmtWeight(w.tenths) + "）？删除后无法恢复。")) return;
+    var old = weights;
+    weights = weights.filter(function (x) { return x.id !== id; });
+    if (!saveWeights()) {
+      weights = old;
+      alert("删除失败：浏览器存储空间可能已满，或浏览器禁用了本地存储。");
+      return;
+    }
+    renderWeights();
+  }
+
+  tabWeightBtn.addEventListener("click", function () { showTab("weight"); });
+
+  // 页面隔夜没关时，回到页面自动重新计算"最近 N 个月"
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) renderWeights();
+  });
+
+  // 复用步骤 3 的时间范围选择器：再调用一次，得到一个独立的选择器
+  // （和开销页各记各的选择，互不影响）
+  var weightPicker = createRangePicker(document.getElementById("weightRange"), renderWeights);
+
+
+  // =====================================================
+  //                  步骤 4.2：日记（新增）
+  // =====================================================
+
+  var DIARY_KEY = "petDiaries_v1";                       // 和档案、提醒、开销、体重分开存
+  var DIARY_MOODS = ["😊", "😴", "😋", "🤒", "🥳"];
+
+  // 步骤 4.7：日记图片（每条最多 1 张，存成图片数据文字）
+  var DIARY_IMG_RE = /^data:image\/(png|jpeg|jpg|gif|webp);base64,[A-Za-z0-9+\/=]+$/;
+  var DIARY_IMG_MAX_CHARS = 700000;      // 单张图片数据最长字符数（缩图后一般只有 5 万～30 万）
+  var DIARY_IMG_MAX_FILE = IMAGE_MAX_FILE;     // 选图时，原图文件超过 20MB 就拒绝（步骤 4.8：和头像共用同一个上限）
+  var DIARY_IMG_WIDTH = 600;             // 缩小到宽度不超过 600 像素
+
+  // 步骤 4.9：日记图片改存到浏览器的另一块存储（IndexedDB），日记文字仍放在 localStorage。
+  // 每条日记在内存里多了两个记号：
+  //   store：""（没有图片）/ "idb"（图片存在 IndexedDB 里）/ "inline"（图片还在 localStorage 里，是旧版留下的，页面启动时会自动搬走）
+  //   imageMissing：这条日记应该有图片，但 IndexedDB 里读不到
+  var imagesState = "loading";           // 图片存储的状态：loading 还在准备 / ready 可以用 / failed 不能用（比如无痕模式）
+  var imagesReady = false;               // 页面启动时的图片准备工作做完了没有（不管成功还是失败）
+  var diarySaving = false;               // 日记正在保存中，防止连点两次
+
+  var diaries = loadDiaries();           // 日记列表（数组顺序 = 写的先后，后写的在后面）
+  var editingDiaryId = null;             // 正在编辑的日记 id（新增时是 null）
+  var diaryMood = "";                    // 表单里当前选的心情，"" 表示没选
+  var diaryImage = "";                   // 步骤 4.7：表单里当前的图片数据，"" 表示没有图片
+  var diaryImageToken = 0;               // 步骤 4.7：每次选图/重开表单加 1，用来丢掉过期的缩图结果
+  var diaryImageBusy = false;            // 步骤 4.7：图片正在处理中
+  var diaryExpanded = {};                // 哪些日记当前是展开状态（按 id 记）
+  var diaryToggleRefs = [];              // 列表里每条日记的"文字区 + 展开按钮"，用来判断要不要显示按钮
+
+  var pageDiary = document.getElementById("pageDiary");
+  var tabDiaryBtn = document.getElementById("tabDiaryBtn");
+  var diaryMask = document.getElementById("diaryMask");
+  var diaryForm = document.getElementById("diaryForm");
+  var diaryDate = document.getElementById("diaryDate");
+  var diaryText = document.getElementById("diaryText");
+  var diaryError = document.getElementById("diaryError");
+  var diaryImageInput = document.getElementById("diaryImageInput");
+  var diaryImagePreview = document.getElementById("diaryImagePreview");
+  var diaryImageRemove = document.getElementById("diaryImageRemove");
+  var moodBtns = document.querySelectorAll(".mood-btn");
+
+  // 判断是不是手机（iPad 也算）
+  var IS_MOBILE = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ||
+    (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+
+  // 手机和电脑显示不同的图片提示（步骤 4.8：头像和日记图片用同一句）
+  var IMAGE_HINT = IS_MOBILE
+    ? "点“选择文件”，再选“照片图库”从相册里选一张就行，保存时会自动缩小。"
+    : "支持 JPG、PNG、GIF、WebP，原图不超过 20MB，保存时会自动缩小。iPhone 的 HEIC 照片请先转成 JPG。";
+  document.getElementById("diaryImageHint").textContent = IMAGE_HINT;
+  document.getElementById("avatarHint").textContent = IMAGE_HINT;
+
+  // 步骤 4.8：图片读不出来时给什么提示（头像和日记图片共用）
+  // reason 是 "toobig" 表示处理后仍然太大；其他情况是读取失败
+  function imageErrorText(file, reason) {
+    if (reason === "toobig") return "这张图片处理后仍然太大，请换一张。";
+    if (/\.(heic|heif)$/i.test(file.name) || /heic|heif/i.test(file.type)) {
+      return IS_MOBILE
+        ? "这张照片的格式打不开，请直接从相册里选照片。"
+        : "这是 HEIC 格式（iPhone 照片），当前浏览器打不开。请先转成 JPG：Mac 上可以用“预览”打开，菜单选“文件 → 导出”，格式选 JPEG，再选导出的文件。";
+    }
+    return IS_MOBILE
+      ? "这张图片读不出来，请换一张，或直接从相册里选。"
+      : "这张图片读不出来，请换成 JPG 或 PNG 格式再试。";
+  }
+
+  // 检查日记图片：没有图片返回 ""；格式正确返回图片数据；格式不对返回 null（读取本地数据和导入备份都用它）
+  function checkDiaryImage(v) {
+    if (v === undefined || v === null || v === "") return "";
+    if (typeof v !== "string") return null;
+    if (v.length > DIARY_IMG_MAX_CHARS) return null;
+    if (!DIARY_IMG_RE.test(v)) return null;
+    return v;
+  }
+
+  // ---------- 读取 / 保存 ----------
+  function loadDiaries() {
+    var text;
+    try {
+      text = localStorage.getItem(DIARY_KEY);
+    } catch (err) {
+      corrupt.diaries = true;
+      return [];
+    }
+    if (text === null) return [];
+    try {
+      var arr = JSON.parse(text);
+      if (!Array.isArray(arr)) { corrupt.diaries = true; return []; }
+      var out = [];
+      for (var i = 0; i < arr.length; i++) {
+        var d = arr[i];
+        if (!d || !parseDate(d.date)) { corrupt.diaries = true; continue; }
+        if (typeof d.text !== "string" || d.text.trim() === "") { corrupt.diaries = true; continue; }
+        var dimg = checkDiaryImage(d.image);
+        if (dimg === null) { corrupt.diaries = true; dimg = ""; }   // 图片数据不对：只丢掉图片，文字保留
+        // 步骤 4.9：图片在哪里？旧版是直接放在这条日记里（inline）；新版放在 IndexedDB（idb），日记里只记一个 hasImage
+        var store = "";
+        if (dimg) store = "inline";
+        else if (d.hasImage === true) store = "idb";
+        out.push({
+          id: String(d.id || newId()),
+          date: d.date,
+          mood: DIARY_MOODS.indexOf(d.mood) >= 0 ? d.mood : "",
+          text: d.text,
+          image: dimg,            // 内存里用来显示的图片数据（idb 的图片要等启动时从 IndexedDB 读出来）
+          store: store,
+          imageMissing: false
+        });
+      }
+      return out;
+    } catch (err) {
+      corrupt.diaries = true;
+      return [];
+    }
+  }
+
+  // 步骤 4.9：存进 localStorage 的样子——图片数据不再放在这里（旧版 inline 的除外，等搬走后才去掉）
+  function diaryToStored(d) {
+    var r = { id: d.id, date: d.date, mood: d.mood, text: d.text };
+    if (d.store === "inline") {
+      r.image = d.image;
+    } else {
+      r.image = "";
+      r.hasImage = (d.store === "idb");
+    }
+    return r;
+  }
+
+  function saveDiaries() {
+    try {
+      localStorage.setItem(DIARY_KEY, JSON.stringify(diaries.map(diaryToStored)));
+    } catch (err) {
+      return false;
+    }
+    markOk("diaries");
+    return true;
+  }
+
+  function findDiary(id) {
+    for (var i = 0; i < diaries.length; i++) {
+      if (diaries[i].id === id) return diaries[i];
+    }
+    return null;
+  }
+
+  // ---------- 画日记页 ----------
+  function renderDiary() {
+    var noPetBox = document.getElementById("diaryNoPet");
+    var mainBox = document.getElementById("diaryMain");
+    if (!pet) {
+      noPetBox.hidden = false;
+      mainBox.hidden = true;
+      return;
+    }
+    noPetBox.hidden = true;
+    mainBox.hidden = false;
+
+    // 让年份下拉覆盖到所有日记的年份
+    var nowY = new Date().getFullYear();
+    var lo = nowY - 5, hi = nowY + 1;
+    diaries.forEach(function (d) {
+      var y = Number(d.date.slice(0, 4));
+      if (y >= 1970 && y <= 2100) {
+        if (y < lo) lo = y;
+        if (y > hi) hi = y;
+      }
+    });
+    diaryPicker.refresh(lo, hi);
+
+    // 只筛选显示，不改动 diaries 里的数据
+    var inList = diaries.filter(function (d) { return diaryPicker.inRange(d.date); });
+    renderOutsideHint(document.getElementById("diaryOutside"), diaries.length - inList.length, diaryPicker, renderDiary);
+    renderDiaryList(inList);
+  }
+
+  function renderDiaryList(list) {
+    var box = document.getElementById("diaryList");
+    box.innerHTML = "";
+    diaryToggleRefs = [];
+
+    if (diaries.length === 0) {
+      box.appendChild(el("div", "list-empty", "📔 还没有日记，写下今天的第一条吧"));
+      return;
+    }
+    if (list.length === 0) {
+      box.appendChild(el("div", "list-empty", "这段时间没有日记"));
+      return;
+    }
+
+    // 日期从新到旧；同一天的，后写的排前面（数组里位置靠后的是后写的）
+    var sorted = list.map(function (d) {
+      return { d: d, idx: diaries.indexOf(d) };
+    });
+    sorted.sort(function (a, b) {
+      if (a.d.date !== b.d.date) return a.d.date < b.d.date ? 1 : -1;
+      return b.idx - a.idx;
+    });
+
+    sorted.forEach(function (x) {
+      box.appendChild(buildDiaryRow(x.d));
+    });
+
+    updateDiaryToggles();
+  }
+
+  function buildDiaryRow(d) {
+    var row = el("div", "item");
+
+    var top = el("div", "exp-top");
+    top.appendChild(el("span", "exp-date", d.date));
+    if (d.mood) top.appendChild(el("span", "diary-mood", d.mood));
+    row.appendChild(top);
+
+    // 日记文字：一律用 textContent 显示，当作纯文本，不会被当成网页代码
+    var expanded = !!diaryExpanded[d.id];
+    var txt = el("div", "diary-text" + (expanded ? "" : " clamp"), d.text);
+    row.appendChild(txt);
+
+    // 「展开 / 收起」按钮：是否显示，等页面可见后再量一下文字有没有超过 3 行
+    var tog = el("button", "diary-toggle", expanded ? "收起" : "展开");
+    tog.type = "button";
+    tog.hidden = !expanded;
+    tog.addEventListener("click", function () {
+      if (diaryExpanded[d.id]) {
+        delete diaryExpanded[d.id];
+        txt.className = "diary-text clamp";
+        tog.textContent = "展开";
+      } else {
+        diaryExpanded[d.id] = true;
+        txt.className = "diary-text";
+        tog.textContent = "收起";
+      }
+    });
+    row.appendChild(tog);
+    diaryToggleRefs.push({ id: d.id, txt: txt, tog: tog });
+
+    // 步骤 4.7：有图片就显示（图片数据只设置给 img 的 src，不会被当成网页代码）
+    if (d.image) {
+      var im = el("img", "diary-img");
+      im.alt = "日记图片";
+      im.src = d.image;
+      row.appendChild(im);
+    } else if (d.store === "idb" && imagesReady) {
+      // 步骤 4.9：这条日记原本有图片，但图片存储里读不到
+      row.appendChild(el("div", "item-note", "🖼️ 这条日记原本有图片，但现在读取不到。可以用备份文件导入恢复。"));
+    }
+
+    var btns = el("div", "item-btns");
+    var editBtn = el("button", "btn-soft", "✏️ 编辑");
+    editBtn.type = "button";
+    editBtn.addEventListener("click", function () { openDiaryForm(d.id); });
+    var delBtn = el("button", "btn-danger", "🗑️ 删除");
+    delBtn.type = "button";
+    delBtn.addEventListener("click", function () { deleteDiary(d.id); });
+    btns.appendChild(editBtn);
+    btns.appendChild(delBtn);
+    row.appendChild(btns);
+    return row;
+  }
+
+  // 折叠状态下，文字真的超过 3 行才显示「展开」；已展开的一直显示「收起」
+  // 页面不可见时量不出高度，所以只在日记页显示出来时才量
+  function updateDiaryToggles() {
+    if (pageDiary.hidden) return;
+    diaryToggleRefs.forEach(function (x) {
+      if (diaryExpanded[x.id]) {
+        x.tog.hidden = false;
+      } else {
+        x.tog.hidden = !(x.txt.scrollHeight > x.txt.clientHeight + 1);
+      }
+    });
+  }
+
+  // 手机转屏、窗口变宽变窄时，每行能放的字数会变，重新判断一次
+  window.addEventListener("resize", updateDiaryToggles);
+
+  // ---------- 心情选择 ----------
+  function setMood(m) {
+    diaryMood = m;
+    for (var i = 0; i < moodBtns.length; i++) {
+      var on = moodBtns[i].getAttribute("data-mood") === m;
+      moodBtns[i].className = "mood-btn" + (on ? " active" : "");
+      moodBtns[i].setAttribute("aria-pressed", on ? "true" : "false");
+    }
+  }
+
+  for (var mi = 0; mi < moodBtns.length; mi++) {
+    moodBtns[mi].addEventListener("click", function () {
+      var m = this.getAttribute("data-mood");
+      setMood(diaryMood === m ? "" : m);   // 再点一次同一个就是取消
+    });
+  }
+
+  // ---------- 输入框自动变高 ----------
+  function autosizeDiaryText() {
+    diaryText.style.height = "auto";
+    var border = diaryText.offsetHeight - diaryText.clientHeight;
+    diaryText.style.height = (diaryText.scrollHeight + border) + "px";
+  }
+  diaryText.addEventListener("input", autosizeDiaryText);
+
+  // ---------- 步骤 4.7：日记图片（缩小、预览、移除） ----------
+  // 把图片缩小到宽度不超过 maxW 像素，输出 JPEG；太大就降低画质重试
+  // 回调：callback(图片数据) 成功；callback(null, "toobig") 处理后仍然太大；callback(null) 读取失败
+  function shrinkImageToWidth(file, maxW, callback) {
+    var reader = new FileReader();
+    reader.onerror = function () { callback(null); };
+    reader.onload = function () {
+      var img = new Image();
+      img.onerror = function () { callback(null); };
+      img.onload = function () {
+        var w = img.width;
+        var h = img.height;
+        if (!w || !h) { callback(null); return; }
+        if (w > maxW) {
+          h = Math.round(h * maxW / w);
+          w = maxW;
+        }
+        if (h < 1) h = 1;
+        var canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        var ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#ffffff";          // 透明图片垫白底
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+
+        var qualities = [0.8, 0.6, 0.45];   // 先用 0.8 的画质；超过约 30 万字符就降低画质再试
+        var out = "";
+        for (var i = 0; i < qualities.length; i++) {
+          out = canvas.toDataURL("image/jpeg", qualities[i]);
+          if (out.length <= 300000) break;
+        }
+        if (out.indexOf("data:image/jpeg;base64,") !== 0) { callback(null); return; }
+        if (out.length > DIARY_IMG_MAX_CHARS) { callback(null, "toobig"); return; }
+        callback(out);
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function showDiaryImage() {
+    if (diaryImage) {
+      diaryImagePreview.src = diaryImage;
+      diaryImagePreview.hidden = false;
+      diaryImageRemove.hidden = false;
+    } else {
+      diaryImagePreview.hidden = true;
+      diaryImagePreview.removeAttribute("src");
+      diaryImageRemove.hidden = true;
+    }
+  }
+
+  diaryImageInput.addEventListener("change", function () {
+    var file = diaryImageInput.files[0];
+    if (!file) return;
+    // 步骤 4.9：图片存储不能用的时候，不让添加图片（日记文字不受影响）
+    if (imagesState !== "ready") {
+      showDiaryError(imagesReady
+        ? "图片存储暂时不可用（可能是无痕模式或浏览器限制），现在不能添加图片。"
+        : "数据还在加载，请稍等一两秒再试。");
+      diaryImageInput.value = "";
+      return;
+    }
+    if (file.type.indexOf("image/") !== 0 && !/\.(heic|heif)$/i.test(file.name)) {
+      showDiaryError("请选择图片文件。");
+      diaryImageInput.value = "";
+      return;
+    }
+    if (file.size > DIARY_IMG_MAX_FILE) {
+      showDiaryError("这张图片文件太大（超过 20MB），请换一张小一点的。");
+      diaryImageInput.value = "";
+      return;
+    }
+    diaryError.hidden = true;
+    var token = ++diaryImageToken;
+    diaryImageBusy = true;
+    shrinkImageToWidth(file, DIARY_IMG_WIDTH, function (dataUrl, reason) {
+      if (token !== diaryImageToken) return;   // 期间关掉了表单或点了"移除"：这次结果作废
+      diaryImageBusy = false;
+      diaryImageInput.value = "";
+      if (!dataUrl) {
+        showDiaryError(imageErrorText(file, reason));
+        return;   // 失败时保留原来的图片（如果有）
+      }
+      diaryImage = dataUrl;
+      showDiaryImage();
+    });
+  });
+
+  diaryImageRemove.addEventListener("click", function () {
+    diaryImageToken++;
+    diaryImageBusy = false;
+    diaryImage = "";
+    diaryImageInput.value = "";
+    showDiaryImage();
+  });
+
+  // ---------- 新增 / 编辑 / 删除 ----------
+  function showDiaryError(msg) {
+    diaryError.textContent = msg;
+    diaryError.hidden = false;
+  }
+
+  function closeDiaryModal() {
+    diaryImageToken++;      // 步骤 4.7：关掉表单时，还没处理完的图片作废
+    diaryImageBusy = false;
+    diaryMask.hidden = true;
+  }
+
+  function openDiaryForm(id) {
+    // 步骤 4.9：页面刚打开时，图片还在从图片存储里读，读完之前先不让编辑，免得把图片弄丢
+    if (!imagesReady) {
+      alert("数据还在加载，请稍等一两秒再试。");
+      return;
+    }
+    editingDiaryId = id || null;
+    diaryError.hidden = true;
+    diaryDate.max = todayString();   // 步骤 4.11：不能选今天之后的日期
+    diaryImageToken++;      // 步骤 4.7：重新打开表单，丢掉上一次没处理完的图片
+    diaryImageBusy = false;
+    diaryImageInput.value = "";
+    if (id) {
+      var d = findDiary(id);
+      if (!d) return;
+      document.getElementById("diaryFormTitle").textContent = "✏️ 编辑日记";
+      diaryDate.value = d.date;
+      diaryText.value = d.text;
+      setMood(d.mood);
+      diaryImage = d.image || "";
+    } else {
+      document.getElementById("diaryFormTitle").textContent = "➕ 写日记";
+      diaryDate.value = todayString();   // 默认今天
+      diaryText.value = "";
+      setMood("");
+      diaryImage = "";
+    }
+    showDiaryImage();
+    diaryMask.hidden = false;
+    autosizeDiaryText();   // 弹出框显示出来之后才能量高度
+  }
+
+  // 步骤 4.9：保存没成功时，把图片存储里刚才做的改动尽量撤回去（失败也没关系，只会多留一张用不到的图）
+  function revertImageOp(id, op, prev) {
+    if (!op) return;
+    var p;
+    if (op === "put") {
+      p = (prev.store === "idb" && prev.image) ? idbPut(id, prev.image) : idbDelete(id);
+    } else {
+      p = idbPut(id, prev.image);
+    }
+    p.catch(function () {});
+  }
+
+  diaryForm.addEventListener("submit", function (event) {
+    event.preventDefault();
+    if (diarySaving) return;
+
+    var date = diaryDate.value;
+    if (!parseDate(date)) { showDiaryError("请选择日期。"); return; }
+    if (date > todayString()) { showDiaryError("日期不能晚于今天。"); return; }   // 步骤 4.11
+
+    var text = diaryText.value.trim();
+    if (text === "") {
+      showDiaryError("请写点内容，不能只有空格。");
+      diaryText.focus();
+      return;
+    }
+
+    if (diaryImageBusy) {
+      showDiaryError("图片还在处理，请稍等一下再保存。");
+      return;
+    }
+
+    var mood = DIARY_MOODS.indexOf(diaryMood) >= 0 ? diaryMood : "";
+    var image = diaryImage;
+    var saveFailMsg = "保存失败：浏览器存储空间可能已满，请先导出备份，再删掉一些内容后重试。";
+    var imageFailMsg = "保存失败：图片没能存进浏览器的图片存储（可能是空间不足）。可以换小一点的图，或去掉图片再试。";
+
+    var isEdit = !!editingDiaryId;
+    var targetId = isEdit ? editingDiaryId : newId();
+    var cur = isEdit ? findDiary(targetId) : null;
+    if (isEdit && !cur) { closeDiaryModal(); renderDiary(); return; }
+
+    // 保存之前这条日记的样子（新增的就是"什么都没有"）
+    var prev = cur
+      ? { date: cur.date, mood: cur.mood, text: cur.text, image: cur.image, store: cur.store, imageMissing: cur.imageMissing }
+      : { date: "", mood: "", text: "", image: "", store: "", imageMissing: false };
+
+    // 图片有没有变？变了的话，要不要动图片存储？
+    var imageChanged = image !== prev.image;
+    var nextStore = prev.store;
+    var nextMissing = prev.imageMissing;
+    var op = null;                       // "put" 存进图片存储 / "delete" 从图片存储删掉 / null 不用动
+    if (imageChanged) {
+      if (image) {
+        op = "put";
+        nextStore = "idb";
+        nextMissing = false;
+      } else {
+        nextStore = "";
+        nextMissing = false;
+        if (prev.store === "idb") op = "delete";
+      }
+    }
+    if (op && imagesState !== "ready") {
+      showDiaryError(imagesReady
+        ? "图片存储暂时不可用（可能是无痕模式或浏览器限制），现在不能修改图片。"
+        : "数据还在加载，请稍等一两秒再试。");
+      return;
+    }
+
+    diarySaving = true;
+    var step = op === "put" ? idbPut(targetId, image)
+             : (op === "delete" ? idbDelete(targetId) : Promise.resolve());
+
+    step.then(function () {
+      // 第一步成功（图片存储已经改好）：再写 localStorage 里的日记文字
+      if (isEdit) {
+        var d = findDiary(targetId);
+        if (!d) { revertImageOp(targetId, op, prev); closeDiaryModal(); renderDiary(); return; }
+        d.date = date; d.mood = mood; d.text = text;
+        d.image = image; d.store = nextStore; d.imageMissing = nextMissing;
+        if (!saveDiaries()) {
+          d.date = prev.date; d.mood = prev.mood; d.text = prev.text;
+          d.image = prev.image; d.store = prev.store; d.imageMissing = prev.imageMissing;
+          revertImageOp(targetId, op, prev);
+          showDiaryError(saveFailMsg);
+          return;
+        }
+      } else {
+        diaries.push({ id: targetId, date: date, mood: mood, text: text, image: image, store: nextStore, imageMissing: false });
+        if (!saveDiaries()) {
+          diaries.pop();
+          revertImageOp(targetId, op, prev);
+          showDiaryError(saveFailMsg);
+          return;
+        }
+      }
+      closeDiaryModal();
+      renderDiary();
+    }, function () {
+      showDiaryError(imageFailMsg);      // 图片没存进去：什么都没改
+    }).then(function () {
+      diarySaving = false;
+    }, function () {
+      diarySaving = false;
+    });
+  });
+
+  document.getElementById("diaryCancel").addEventListener("click", closeDiaryModal);
+
+  document.getElementById("addDiaryBtn").addEventListener("click", function () {
+    openDiaryForm(null);
+  });
+
+  function deleteDiary(id) {
+    var d = findDiary(id);
+    if (!d) return;
+    if (!confirm("确定要删除这条日记吗（" + d.date + "）？删除后无法恢复。")) return;
+    var old = diaries;
+    diaries = diaries.filter(function (x) { return x.id !== id; });
+    if (!saveDiaries()) {
+      diaries = old;
+      alert("删除失败：浏览器存储空间可能已满，或浏览器禁用了本地存储。");
+      return;
+    }
+    delete diaryExpanded[id];
+    renderDiary();
+    // 步骤 4.9：日记删掉之后，图片存储里的那张图也删掉（失败了只是残留一张用不到的图）
+    if (d.store === "idb") idbDelete(id).catch(function () {});
+    updateStorageInfo();
+  }
+
+  tabDiaryBtn.addEventListener("click", function () { showTab("diary"); });
+
+  // 页面隔夜没关时，回到页面自动重新计算"最近 N 个月"
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) renderDiary();
+  });
+
+  // 复用步骤 3 的时间范围选择器：再调用一次，得到一个独立的选择器
+  // （和开销页、体重页各记各的选择，互不影响）
+  var diaryPicker = createRangePicker(document.getElementById("diaryRange"), renderDiary);
+
+
+  // =====================================================
+  //            步骤 4.5：加到日历（导出 .ics，新增）
+  // =====================================================
+
+  var CAL_ASK_KEY = "petCalendarAsk_v1";            // "保存后询问是否加到日历"的开关（和其他数据分开存）
+  var CAL_EXPORTED_KEY = "petCalendarExported_v1";  // 哪些项目导出过（和其他数据分开存）
+  var calAskOn = loadCalAsk();                      // 默认开启
+  var calExported = loadCalExported();              // { 项目id: true }，生日用 "birthday"
+  var calCtx = null;                                // 确认框当前针对的项目：{type: "item", id} 或 {type: "birthday"}
+
+  var calMask = document.getElementById("calMask");
+  var calText = document.getElementById("calText");
+  var calOldHint = document.getElementById("calOldHint");
+  var calWechat = document.getElementById("calWechat");
+  var calError = document.getElementById("calError");
+  var calYes = document.getElementById("calYes");
+  var calNo = document.getElementById("calNo");
+  var calNever = document.getElementById("calNever");
+  var calAskSwitch = document.getElementById("calAskSwitch");
+
+  // ---------- 读取 / 保存 ----------
+  function loadCalAsk() {
+    try {
+      var v = localStorage.getItem(CAL_ASK_KEY);
+      if (v === null || v === "on") return true;   // 没存过就是开启
+      if (v === "off") return false;
+      corrupt.calAsk = true;                       // 既不是 on 也不是 off：当作读取失败，按默认开启
+      return true;
+    } catch (e) {
+      corrupt.calAsk = true;
+      return true;
+    }
+  }
+
+  function saveCalAsk() {
+    try {
+      localStorage.setItem(CAL_ASK_KEY, calAskOn ? "on" : "off");
+    } catch (e) {
+      return false;
+    }
+    markOk("calAsk");
+    return true;
+  }
+
+  function loadCalExported() {
+    var text;
+    try {
+      text = localStorage.getItem(CAL_EXPORTED_KEY);
+    } catch (e) {
+      corrupt.calExported = true;
+      return {};
+    }
+    if (text === null) return {};
+    try {
+      var obj = JSON.parse(text);
+      if (!obj || typeof obj !== "object" || Array.isArray(obj)) { corrupt.calExported = true; return {}; }
+      var out = {};
+      for (var k in obj) {
+        if (!Object.prototype.hasOwnProperty.call(obj, k)) continue;
+        if (obj[k] === true) out[k] = true;
+        else corrupt.calExported = true;
+      }
+      return out;
+    } catch (e) {
+      corrupt.calExported = true;
+      return {};
+    }
+  }
+
+  function saveCalExported() {
+    try {
+      localStorage.setItem(CAL_EXPORTED_KEY, JSON.stringify(calExported));
+    } catch (e) {
+      return false;
+    }
+    markOk("calExported");
+    return true;
+  }
+
+  function calKey(ctx) {
+    return ctx.type === "birthday" ? "birthday" : ctx.id;
+  }
+
+  function hasExported(key) {
+    return Object.prototype.hasOwnProperty.call(calExported, key);
+  }
+
+  // ---------- 微信内置浏览器检测 ----------
+  // 用户代理里有 MicroMessenger，或网址带 ?wechat=1（测试用），都按在微信里处理
+  function isWeChat() {
+    var ua = navigator.userAgent || "";
+    if (ua.indexOf("MicroMessenger") >= 0) return true;
+    return /[?&]wechat=1(&|$)/.test(location.search);
+  }
+
+  // ---------- 生成日历事件 ----------
+  // 标题里的项目名去掉最前面的 emoji（"💉 疫苗" → "疫苗"），这样标题是"豆豆 疫苗到期"
+  function cleanItemName(name) {
+    var s = String(name);
+    var t = s;
+    try {
+      t = s.replace(new RegExp("^[\\p{Extended_Pictographic}\\uFE0F\\u200D\\s]+", "u"), "");
+    } catch (e) {
+      t = s;
+    }
+    t = t.trim();
+    return t ? t : s.trim();
+  }
+
+  function canExportItem(item) {
+    if (!item) return false;
+    var st = getItemStatus(item);
+    return st.kind === "soon" || st.kind === "normal";   // 有下次日期，且不早于今天
+  }
+
+  // 返回 {uid, date:{y,m,d}, days, summary, rrule}；不能导出时返回 null
+  function buildCalEvent(ctx) {
+    if (!pet) return null;
+
+    if (ctx.type === "birthday") {
+      var b = getBirthdayStatus();
+      var p0 = pet.birthday ? parseDate(pet.birthday) : null;
+      if (!b || !p0) return null;
+      var bd = parseDate(b.date);
+      if (!bd) return null;
+      var feb29 = p0.m === 2 && p0.d === 29;
+      return {
+        uid: "pet-birthday@pet-profile.local",
+        date: bd,
+        days: b.days,
+        summary: pet.name + " 生日 🎂",
+        // 2 月 29 日：每年 2 月的最后一天（平年 2/28，闰年 2/29）
+        rrule: feb29 ? "FREQ=YEARLY;BYMONTH=2;BYMONTHDAY=-1" : "FREQ=YEARLY"
+      };
+    }
+
+    var item = findItem(ctx.id);
+    if (!canExportItem(item)) return null;
+    var st = getItemStatus(item);
+    var nd = parseDate(st.next);
+    if (!nd) return null;
+    return {
+      uid: "pet-item-" + String(item.id).replace(/[^A-Za-z0-9_-]/g, "") + "@pet-profile.local",
+      date: nd,
+      days: st.days,
+      summary: pet.name + " " + cleanItemName(item.name) + "到期",
+      rrule: ""   // 普通项目只导出这一次，不重复
+    };
+  }
+
+  // ---------- 按 RFC 5545 生成 .ics 文本 ----------
+  // 文本转义：先处理反斜杠，再处理分号、逗号、换行
+  function icsEscape(s) {
+    return String(s)
+      .replace(/\\/g, "\\\\")
+      .replace(/;/g, "\\;")
+      .replace(/,/g, "\\,")
+      .replace(/\r\n|\r|\n/g, "\\n");
+  }
+
+  // 折行：每行（不含结尾换行）最多 75 个字节；续行以一个空格开头（这个空格也算字节）
+  // 按"字符"切，不会把中文或 emoji 从中间切开
+  function icsFold(line) {
+    var out = [];
+    var cur = "";
+    var curBytes = 0;
+    var chars = Array.from(line);
+    for (var i = 0; i < chars.length; i++) {
+      var ch = chars[i];
+      var cp = ch.codePointAt(0);
+      var bytes = cp < 0x80 ? 1 : (cp < 0x800 ? 2 : (cp < 0x10000 ? 3 : 4));   // UTF-8 占几个字节
+      if (curBytes + bytes > 75) {
+        out.push(cur);
+        cur = " ";
+        curBytes = 1;
+      }
+      cur += ch;
+      curBytes += bytes;
+    }
+    out.push(cur);
+    return out.join("\r\n");
+  }
+
+  function compactDate(y, m, d) {
+    return String(y).padStart(4, "0") + pad2(m) + pad2(d);
+  }
+
+  function buildIcs(ev) {
+    var d = ev.date;
+    var start = compactDate(d.y, d.m, d.d);
+    var nextDay = new Date(Date.UTC(d.y, d.m - 1, d.d + 1));   // 全天事件的结束日期 = 事件日期的后一天
+    var end = compactDate(nextDay.getUTCFullYear(), nextDay.getUTCMonth() + 1, nextDay.getUTCDate());
+    var stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+/, "");   // 例如 20261120T081530Z
+
+    // 事件日期距今 7 天及以上：提前 7 天的早上 9 点（相对事件当天 0 点是提前 6 天 15 小时）
+    // 不足 7 天：事件当天早上 9 点（相对事件当天 0 点是 9 小时后）
+    var trigger = ev.days >= 7 ? "-P6DT15H" : "PT9H";
+
+    var lines = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//Pet Profile//Pet Reminder//CN",
+      "CALSCALE:GREGORIAN",
+      "METHOD:PUBLISH",
+      "BEGIN:VEVENT",
+      "UID:" + ev.uid,
+      "DTSTAMP:" + stamp,
+      "DTSTART;VALUE=DATE:" + start,
+      "DTEND;VALUE=DATE:" + end,
+      "SUMMARY:" + icsEscape(ev.summary)
+    ];
+    if (ev.rrule) lines.push("RRULE:" + ev.rrule);
+    lines.push(
+      "BEGIN:VALARM",
+      "ACTION:DISPLAY",
+      "DESCRIPTION:" + icsEscape(ev.summary),
+      "TRIGGER;RELATED=START:" + trigger,
+      "END:VALARM",
+      "END:VEVENT",
+      "END:VCALENDAR"
+    );
+    return lines.map(icsFold).join("\r\n") + "\r\n";   // 换行符一律是 CRLF
+  }
+
+  // 用 Blob 下载，文件名只用英文数字，例如 pet-reminder-20261120.ics
+  function downloadIcs(text) {
+    var blob = new Blob([text], { type: "text/calendar;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "pet-reminder-" + todayString().replace(/-/g, "") + ".ics";
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 1000);
+  }
+
+  // ---------- 确认框 ----------
+  function showCalError(msg) {
+    calError.textContent = msg;
+    calError.hidden = false;
+  }
+
+  function openCalDialog(ctx) {
+    var ev = buildCalEvent(ctx);
+    if (!ev) return;   // 不能导出的，不弹框
+    calCtx = ctx;
+    calText.textContent = "要把下次日期（" + ev.date.m + " 月 " + ev.date.d + " 日）加到手机日历吗？";
+    calOldHint.hidden = !hasExported(calKey(ctx));   // 之前导出过，就多提示一句
+    calWechat.hidden = true;
+    calError.hidden = true;
+    calMask.hidden = false;
+    calYes.focus();
+  }
+
+  function closeCalDialog() {
+    calMask.hidden = true;
+    calCtx = null;
+  }
+
+  // 保存或「已处理」之后调用：开关开着、并且这一项能导出，才弹框
+  function maybePromptCalendar(id) {
+    if (!calAskOn || !id) return;
+    if (!canExportItem(findItem(id))) return;
+    openCalDialog({ type: "item", id: id });
+  }
+
+  calYes.addEventListener("click", function () {
+    if (!calCtx) return;
+
+    // 微信里：不下载，只给提示（对话框保持打开，可以点"这次不用"关掉）
+    if (isWeChat()) {
+      calWechat.hidden = false;
+      calError.hidden = true;
+      return;
+    }
+
+    var ev = buildCalEvent(calCtx);
+    if (!ev) {
+      showCalError("这一项现在不能加到日历（可能已过期），请先更新上次日期。");
+      return;
+    }
+    try {
+      downloadIcs(buildIcs(ev));
+    } catch (e) {
+      showCalError("生成日历文件失败，请换个浏览器试试。");
+      return;
+    }
+    calExported[calKey(calCtx)] = true;   // 记下"已导出过"
+    saveCalExported();
+    closeCalDialog();
+  });
+
+  // 这次不用：关闭，不下载；下次修改这一项时还会再问
+  calNo.addEventListener("click", closeCalDialog);
+
+  // 以后都不再提醒：关闭，并把"保存后询问"开关关掉（手动按钮仍可用）
+  calNever.addEventListener("click", function () {
+    setCalAsk(false);
+    closeCalDialog();
+  });
+
+  // ---------- 设置区的开关 ----------
+  function syncCalSwitch() {
+    calAskSwitch.checked = calAskOn;
+  }
+
+  function setCalAsk(on) {
+    calAskOn = on;
+    if (!saveCalAsk()) {
+      alert("设置保存失败：浏览器存储空间可能已满，或浏览器禁用了本地存储。刷新后这个设置可能会恢复。");
+    }
+    syncCalSwitch();
+  }
+
+  calAskSwitch.addEventListener("change", function () {
+    setCalAsk(calAskSwitch.checked);
+  });
+
+
+  // =====================================================
+  //     步骤 4.6a：数据备份 / 删除档案提示 / 读取出错（新增）
+  // =====================================================
+
+  var LAST_BACKUP_KEY = "petLastBackup_v1";     // 上次导出备份的时间（毫秒数）；不放进备份文件里
+  var IMPORT_DONE_KEY = "petImportDone_v1";     // 存在 sessionStorage：导入后刷新页面，用它来显示"导入完成"，显示后立刻删掉
+  var MAX_IMPORT_BYTES = 30 * 1024 * 1024;      // 备份文件最大 30MB（步骤 4.7：日记带图片后，备份会变大，从 5MB 放宽）
+  var BK_ID = /^[A-Za-z0-9_-]{1,64}$/;          // 备份里记录 id 的合法写法
+  var lastBackupMs = loadLastBackup();
+  var pendingImport = null;                     // 校验通过、等用户点"确定导入"的数据
+  var dialogLastFocus = null;                   // 弹框关闭后，把光标还给打开前的按钮
+
+  var exportBtn = document.getElementById("exportBtn");
+  var importBtn = document.getElementById("importBtn");
+  var importFile = document.getElementById("importFile");
+  var backupMsg = document.getElementById("backupMsg");
+  var lastBackupBox = document.getElementById("lastBackup");
+
+  var delMask = document.getElementById("delMask");
+  var delMsg = document.getElementById("delMsg");
+  var delExport = document.getElementById("delExport");
+  var delConfirm = document.getElementById("delConfirm");
+  var delCancel = document.getElementById("delCancel");
+
+  var impMask = document.getElementById("impMask");
+  var impSummary = document.getElementById("impSummary");
+  var impError = document.getElementById("impError");
+  var impYes = document.getElementById("impYes");
+  var impNo = document.getElementById("impNo");
+
+  // ---------- "读取失败"提示条 ----------
+  function anyCorrupt() {
+    for (var k in corrupt) {
+      if (corrupt[k]) return true;
+    }
+    return false;
+  }
+
+  function updateCorruptBanner() {
+    // 步骤 4.8：用户点了"关闭"后，这一次打开期间不再显示
+    document.getElementById("corruptBanner").hidden = !anyCorrupt() || corruptDismissed;
+  }
+
+  // 某一部分成功保存了新内容：这一部分不再算"读取失败"
+  function markOk(part) {
+    if (corrupt[part]) {
+      corrupt[part] = false;
+      updateCorruptBanner();
+    }
+    updateStorageInfo();   // 步骤 4.8：每次保存成功后，刷新存储空间显示
+  }
+
+  // ---------- 小工具 ----------
+  function showMsg(box, text, kind) {
+    box.textContent = text;
+    box.className = "msg " + (kind === "ok" ? "msg-ok" : "msg-err");
+    box.hidden = false;
+  }
+
+  function hideMsg(box) {
+    box.hidden = true;
+    box.textContent = "";
+  }
+
+  function isPlainObject(v) {
+    return v !== null && typeof v === "object" && !Array.isArray(v);
+  }
+
+  function loadLastBackup() {
+    try {
+      var v = localStorage.getItem(LAST_BACKUP_KEY);
+      if (v === null) return null;
+      var n = Number(v);
+      return (isFinite(n) && n > 0) ? n : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function saveLastBackup() {
+    try {
+      localStorage.setItem(LAST_BACKUP_KEY, String(lastBackupMs));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function updateLastBackupText() {
+    if (lastBackupMs) {
+      var d = new Date(lastBackupMs);
+      lastBackupBox.textContent = "上次导出：" + (d.getMonth() + 1) + " 月 " + d.getDate() + " 日";
+    } else {
+      lastBackupBox.textContent = "还没有导出过备份";
+    }
+  }
+
+  // 用 Blob 下载任意文本文件（文件名只用英文数字）
+  function downloadBlob(text, mime, filename) {
+    var blob = new Blob([text], { type: mime });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 1000);
+  }
+
+  // ---------- 导出备份 ----------
+  function hasAnyData() {
+    return !!(pet || (reminders && reminders.length) || expenses.length || weights.length ||
+              diaries.length || Object.keys(calExported).length);
+  }
+
+  function collectBackup() {
+    return {
+      app: "pet-app",
+      formatVersion: 1,
+      exportedAt: new Date().toISOString(),
+      data: {
+        pet: pet || null,
+        reminders: reminders || null,
+        expenses: expenses,
+        weights: weights,
+        // 步骤 4.9：图片虽然存在 IndexedDB 里，备份文件里仍然和以前一样，每条日记带着自己的 image
+        // （没有图片就是空字符串），所以以前导出的备份仍然能导入
+        diaries: diaries.map(function (d) {
+          return { id: d.id, date: d.date, mood: d.mood, text: d.text, image: d.image || "" };
+        }),
+        calendarAsk: calAskOn,
+        calendarExported: calExported
+      }
+    };
+  }
+
+  // 返回 {ok, msg}；调用的地方负责把 msg 显示出来
+  function doExport() {
+    // 步骤 4.9：图片还没读完，或者读不出来的时候，导出的备份会缺图片，所以宁可先不导出
+    if (!imagesReady) return { ok: false, msg: "数据还在加载，请稍等一两秒再试。" };
+    if (diaries.some(function (d) { return d.store === "idb" && !d.image && !d.imageMissing; })) {
+      return { ok: false, msg: "图片存储暂时读不出来，为了避免备份里缺少图片，已取消导出。请刷新页面再试，或换一个浏览器。" };
+    }
+    if (!hasAnyData()) return { ok: false, msg: "目前没有可导出的数据" };
+    var text;
+    try {
+      text = JSON.stringify(collectBackup(), null, 2);
+      downloadBlob(text, "application/json;charset=utf-8",
+        "pet-backup-" + todayString().replace(/-/g, "") + ".json");
+    } catch (e) {
+      return { ok: false, msg: "生成备份文件失败，请换个浏览器试试。" };
+    }
+    lastBackupMs = Date.now();
+    saveLastBackup();
+    updateLastBackupText();
+    updateBackupBanner();   // 步骤 4.8：刚导出过，备份提醒不再显示
+    updateStorageInfo();
+    var msg = "备份已下载，请妥善保管这个文件";
+    if (anyCorrupt()) msg += "。注意：有部分数据读取失败，备份里不包含这些部分。";
+    return { ok: true, msg: msg };
+  }
+
+  exportBtn.addEventListener("click", function () {
+    var r = doExport();
+    showMsg(backupMsg, r.msg, r.ok ? "ok" : "err");
+  });
+
+  // ---------- 校验备份文件（校验全部通过之前，不碰任何现有数据） ----------
+  // 出错返回 {error}；通过返回 {clean, summary, exportedAt}
+  function validateBackupText(text) {
+    var obj;
+    try {
+      obj = JSON.parse(String(text).replace(/^\uFEFF/, ""));
+    } catch (e) {
+      return { error: "这不是有效的备份文件" };
+    }
+    if (!isPlainObject(obj)) return { error: "这不是有效的备份文件" };
+    if (obj.app !== "pet-app") return { error: "这不是本应用的备份文件" };
+
+    var ver = obj.formatVersion;
+    if (ver !== 1) {
+      if (typeof ver === "number" && ver > 1) return { error: "备份来自更新的版本，当前页面无法导入" };
+      return { error: "不认识的备份版本" };
+    }
+
+    var d = obj.data;
+    if (!isPlainObject(d)) return { error: "备份内容（data）格式不正确" };
+
+    var i, r, seen, rec;
+
+    // 档案：null 或一个正确的档案
+    var cleanPet = null;
+    if (d.pet === undefined) return { error: "档案数据格式不正确" };
+    if (d.pet !== null) {
+      cleanPet = checkPet(d.pet);
+      if (!cleanPet) return { error: "档案数据格式不正确" };
+    }
+
+    // 健康提醒：null 或列表
+    var cleanRem = null;
+    if (d.reminders === undefined) return { error: "健康提醒数据格式不正确" };
+    if (d.reminders !== null) {
+      if (!Array.isArray(d.reminders)) return { error: "健康提醒数据格式不正确" };
+      cleanRem = [];
+      seen = Object.create(null);
+      for (i = 0; i < d.reminders.length; i++) {
+        r = d.reminders[i];
+        if (!isPlainObject(r)) return { error: "健康提醒数据格式不正确" };
+        if (typeof r.id !== "string" || !BK_ID.test(r.id) || seen[r.id]) return { error: "健康提醒数据格式不正确" };
+        if (typeof r.name !== "string" || r.name.trim() === "") return { error: "健康提醒数据格式不正确" };
+        var last = (r.lastDate === undefined || r.lastDate === null) ? "" : r.lastDate;
+        if (typeof last !== "string" || (last !== "" && !parseDate(last))) return { error: "健康提醒数据格式不正确" };
+        if (typeof r.cycle !== "number" || (r.cycle !== 0 && CYCLE_OPTIONS.indexOf(r.cycle) < 0)) return { error: "健康提醒数据格式不正确" };
+        seen[r.id] = true;
+        cleanRem.push({ id: r.id, name: r.name, lastDate: last, cycle: r.cycle });
+      }
+    }
+
+    // 开销
+    var cleanExp = [];
+    if (!Array.isArray(d.expenses)) return { error: "开销数据格式不正确" };
+    seen = Object.create(null);
+    for (i = 0; i < d.expenses.length; i++) {
+      r = d.expenses[i];
+      if (!isPlainObject(r)) return { error: "开销数据格式不正确" };
+      if (typeof r.id !== "string" || !BK_ID.test(r.id) || seen[r.id]) return { error: "开销数据格式不正确" };
+      if (typeof r.date !== "string" || !parseDate(r.date)) return { error: "开销数据格式不正确" };
+      if (typeof r.cents !== "number" || !isFinite(r.cents) || Math.floor(r.cents) !== r.cents ||
+          r.cents <= 0 || r.cents > 9999999999) return { error: "开销数据格式不正确" };
+      if (typeof r.category !== "string" || EXPENSE_CATEGORIES.indexOf(r.category) < 0) return { error: "开销数据格式不正确" };
+      var note = (r.note === undefined || r.note === null) ? "" : r.note;
+      if (typeof note !== "string") return { error: "开销数据格式不正确" };
+      seen[r.id] = true;
+      cleanExp.push({ id: r.id, date: r.date, cents: r.cents, category: r.category, note: note });
+    }
+
+    // 体重（同一天只能有一条）
+    var cleanWt = [];
+    if (!Array.isArray(d.weights)) return { error: "体重数据格式不正确" };
+    seen = Object.create(null);
+    var seenDate = Object.create(null);
+    for (i = 0; i < d.weights.length; i++) {
+      r = d.weights[i];
+      if (!isPlainObject(r)) return { error: "体重数据格式不正确" };
+      if (typeof r.id !== "string" || !BK_ID.test(r.id) || seen[r.id]) return { error: "体重数据格式不正确" };
+      if (typeof r.date !== "string" || !parseDate(r.date)) return { error: "体重数据格式不正确" };
+      if (seenDate[r.date]) return { error: "体重数据格式不正确（同一天有多条记录）" };
+      if (typeof r.tenths !== "number" || !isFinite(r.tenths) || Math.floor(r.tenths) !== r.tenths ||
+          r.tenths <= 0 || r.tenths > 2000) return { error: "体重数据格式不正确" };
+      seen[r.id] = true;
+      seenDate[r.date] = true;
+      cleanWt.push({ id: r.id, date: r.date, tenths: r.tenths });
+    }
+
+    // 日记（步骤 4.7：每条可以带 1 张图片）
+    var cleanDiary = [];
+    var diaryImgCount = 0;
+    if (!Array.isArray(d.diaries)) return { error: "日记数据格式不正确" };
+    seen = Object.create(null);
+    for (i = 0; i < d.diaries.length; i++) {
+      r = d.diaries[i];
+      if (!isPlainObject(r)) return { error: "日记数据格式不正确" };
+      if (typeof r.id !== "string" || !BK_ID.test(r.id) || seen[r.id]) return { error: "日记数据格式不正确" };
+      if (typeof r.date !== "string" || !parseDate(r.date)) return { error: "日记数据格式不正确" };
+      var mood = (r.mood === undefined || r.mood === null) ? "" : r.mood;
+      if (typeof mood !== "string" || (mood !== "" && DIARY_MOODS.indexOf(mood) < 0)) return { error: "日记数据格式不正确" };
+      if (typeof r.text !== "string" || r.text.trim() === "") return { error: "日记数据格式不正确" };
+      var dimg = checkDiaryImage(r.image);
+      if (dimg === null) return { error: "日记数据格式不正确（图片格式有问题）" };
+      if (dimg) diaryImgCount++;
+      seen[r.id] = true;
+      cleanDiary.push({ id: r.id, date: r.date, mood: mood, text: r.text, image: dimg });
+    }
+
+    // 日历设置
+    if (typeof d.calendarAsk !== "boolean") return { error: "日历设置格式不正确" };
+
+    // 各提醒项"是否已导出日历"的记录
+    var cleanCalExp = {};
+    if (!isPlainObject(d.calendarExported)) return { error: "日历导出记录格式不正确" };
+    for (var k in d.calendarExported) {
+      if (!Object.prototype.hasOwnProperty.call(d.calendarExported, k)) continue;
+      if (!BK_ID.test(k) || d.calendarExported[k] !== true) return { error: "日历导出记录格式不正确" };
+      cleanCalExp[k] = true;
+    }
+
+    var summary = (cleanPet ? 1 : 0) + " 只宠物，" +
+      (cleanRem ? cleanRem.length : 0) + " 项提醒，" +
+      cleanExp.length + " 笔开销，" +
+      cleanWt.length + " 条体重，" +
+      cleanDiary.length + " 篇日记" +
+      (diaryImgCount ? "（含 " + diaryImgCount + " 张图片）" : "");
+
+    var exportedAt = null;
+    if (typeof obj.exportedAt === "string") {
+      var t = new Date(obj.exportedAt);
+      if (!isNaN(t.getTime())) exportedAt = t;
+    }
+
+    return {
+      clean: {
+        pet: cleanPet, reminders: cleanRem, expenses: cleanExp, weights: cleanWt, diaries: cleanDiary,
+        calendarAsk: d.calendarAsk, calendarExported: cleanCalExp
+      },
+      summary: summary,
+      exportedAt: exportedAt
+    };
+  }
+
+  // ---------- 选文件 → 读取 → 校验 → 确认框 ----------
+  importBtn.addEventListener("click", function () {
+    hideMsg(backupMsg);
+    importFile.click();
+  });
+
+  importFile.addEventListener("change", function () {
+    var f = importFile.files && importFile.files[0];
+    if (!f) return;
+    hideMsg(backupMsg);
+
+    if (!/\.json$/i.test(f.name)) {
+      importFile.value = "";
+      showMsg(backupMsg, "请选择 .json 格式的备份文件", "err");
+      return;
+    }
+    if (f.size > MAX_IMPORT_BYTES) {
+      importFile.value = "";
+      showMsg(backupMsg, "文件超过 30MB，不是本应用的备份文件", "err");
+      return;
+    }
+
+    var reader = new FileReader();
+    reader.onerror = function () {
+      importFile.value = "";
+      showMsg(backupMsg, "文件读取失败，请重试", "err");
+    };
+    reader.onload = function () {
+      importFile.value = "";   // 让同一个文件下次还能再选
+      var res = validateBackupText(reader.result);
+      if (res.error) {
+        showMsg(backupMsg, res.error, "err");   // 校验没通过：什么都没改
+        return;
+      }
+      openImportDialog(res);
+    };
+    reader.readAsText(f);
+  });
+
+  // ---------- 导入确认框 ----------
+  function openImportDialog(res) {
+    pendingImport = res.clean;
+    var text = "备份内容：" + res.summary + "。";
+    if (res.exportedAt) {
+      text += "（备份时间：" + res.exportedAt.getFullYear() + " 年 " + (res.exportedAt.getMonth() + 1) +
+              " 月 " + res.exportedAt.getDate() + " 日）";
+    }
+    impSummary.textContent = text;
+    impError.hidden = true;
+    impYes.disabled = false;
+    dialogLastFocus = document.activeElement;
+    impMask.hidden = false;
+    impNo.focus();   // 默认停在"取消"上，避免误按回车就覆盖数据
+  }
+
+  function closeImp() {
+    impMask.hidden = true;
+    pendingImport = null;
+    restoreFocus();
+  }
+
+  function restoreFocus() {
+    var f = dialogLastFocus;
+    dialogLastFocus = null;
+    if (f && document.body.contains(f) && typeof f.focus === "function") f.focus();
+  }
+
+  impNo.addEventListener("click", closeImp);
+
+  impYes.addEventListener("click", function () {
+    if (!pendingImport) return;
+    impYes.disabled = true;
+    // 步骤 4.9：导入现在要等图片存储写完，所以是"等一下再告诉你结果"
+    applyImport(pendingImport).then(function (err) {
+      if (err) {
+        impError.textContent = err;
+        impError.hidden = false;
+        impYes.disabled = false;
+      }
+    });
+  });
+
+  // 把校验过的数据写进 localStorage 和图片存储；成功就刷新页面，失败就恢复原样并返回错误文字（成功返回空字符串）
+  // 步骤 4.9：顺序是——先写 localStorage（出错能原样恢复），再一次性写图片存储（要么全部成功，要么什么都不改）；
+  // 图片存储失败的话，再把 localStorage 恢复回去，所以任何一步出错，现有数据都保持原样
+  function applyImport(clean) {
+    if (!imagesReady) return Promise.resolve("数据还在加载，请稍等一两秒再试。");
+
+    // 日记存进 localStorage 的样子：图片数据不放在里面，只记"有没有图片"
+    var imageItems = [];
+    var storedDiaries = clean.diaries.map(function (d) {
+      if (d.image) imageItems.push([d.id, d.image]);
+      return { id: d.id, date: d.date, mood: d.mood, text: d.text, image: "", hasImage: !!d.image };
+    });
+    if (imageItems.length > 0 && imagesState !== "ready") {
+      return Promise.resolve("图片存储暂时不可用（可能是无痕模式或浏览器限制），没法导入带图片的备份。现有数据没有改动。");
+    }
+
+    var plan = {};
+    plan[STORAGE_KEY] = clean.pet ? JSON.stringify(clean.pet) : null;
+    plan[REMINDER_KEY] = clean.reminders ? JSON.stringify(clean.reminders) : null;
+    plan[EXPENSE_KEY] = JSON.stringify(clean.expenses);
+    plan[WEIGHT_KEY] = JSON.stringify(clean.weights);
+    plan[DIARY_KEY] = JSON.stringify(storedDiaries);
+    plan[CAL_ASK_KEY] = clean.calendarAsk ? "on" : "off";
+    plan[CAL_EXPORTED_KEY] = JSON.stringify(clean.calendarExported);
+
+    // 先把现在的原始内容完整记下来（包括损坏的），写入出错时好原样恢复
+    var snapshot = {};
+    var key;
+    try {
+      for (key in plan) snapshot[key] = localStorage.getItem(key);
+    } catch (e) {
+      return Promise.resolve("无法访问浏览器的本地存储，导入已取消，现有数据没有改动。");
+    }
+
+    // 把记下来的内容写回去；成功返回 true
+    function restoreSnapshot() {
+      try {
+        for (var k in snapshot) {
+          if (snapshot[k] === null) localStorage.removeItem(k);
+          else localStorage.setItem(k, snapshot[k]);
+        }
+        return true;
+      } catch (e2) {
+        return false;
+      }
+    }
+    var severeMsg = "导入失败，而且恢复原数据时也出了问题。请先不要关闭这个页面，立刻点“导出备份”保存当前内容。";
+
+    try {
+      for (key in plan) {
+        if (plan[key] === null) localStorage.removeItem(key);
+        else localStorage.setItem(key, plan[key]);
+      }
+    } catch (e) {
+      return Promise.resolve(restoreSnapshot()
+        ? "导入失败：浏览器存储空间可能不足。现有数据已保持原样。"
+        : severeMsg);
+    }
+
+    function finish() {
+      try { sessionStorage.setItem(IMPORT_DONE_KEY, "1"); } catch (e) {}
+      location.reload();   // 刷新页面，让所有页面显示新数据
+      return "";
+    }
+
+    // 图片存储可以用：一次性换成备份里的图片（没有图片也要执行，用来清掉旧的图片）
+    if (imagesState !== "ready") return Promise.resolve(finish());   // 这份备份里没有图片
+    return idbReplaceAll(imageItems).then(finish, function () {
+      return restoreSnapshot()
+        ? "导入失败：图片没能写进浏览器的图片存储（可能是空间不足）。现有数据已保持原样。"
+        : severeMsg;
+    });
+  }
+
+  // 刷新后显示"导入完成"
+  function showImportDoneIfAny() {
+    var flag = null;
+    try {
+      flag = sessionStorage.getItem(IMPORT_DONE_KEY);
+      if (flag !== null) sessionStorage.removeItem(IMPORT_DONE_KEY);
+    } catch (e) {}
+    if (flag === "1") showMsg(backupMsg, "导入完成", "ok");
+  }
+
+  // ---------- 删除档案前的提示框 ----------
+  function openDeleteDialog() {
+    hideMsg(delMsg);
+    dialogLastFocus = document.activeElement;
+    delMask.hidden = false;
+    delCancel.focus();   // 默认停在"取消"上，避免误按回车就删除
+  }
+
+  function closeDel() {
+    delMask.hidden = true;
+    restoreFocus();
+  }
+
+  delExport.addEventListener("click", function () {
+    var r = doExport();                          // 下载备份，然后留在这个弹框里
+    showMsg(delMsg, r.msg, r.ok ? "ok" : "err");
+  });
+
+  delConfirm.addEventListener("click", function () {
+    closeDel();
+    deleteEverything();
+  });
+
+  delCancel.addEventListener("click", closeDel);
+
+  // ---------- 这两个新弹框：Esc 关闭、点遮罩关闭、Tab 键不跑到弹框外面 ----------
+  function trapTab(mask, e) {
+    var btns = mask.querySelectorAll("button:not([disabled])");
+    if (!btns.length) return;
+    var first = btns[0], last = btns[btns.length - 1];
+    if (!mask.contains(document.activeElement)) {
+      e.preventDefault();
+      first.focus();
+    } else if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
+
+  document.addEventListener("keydown", function (e) {
+    var open = !impMask.hidden ? impMask : (!delMask.hidden ? delMask : null);
+    if (!open) return;
+    if (e.key === "Escape") {
+      e.preventDefault();
+      if (open === impMask) closeImp(); else closeDel();
+    } else if (e.key === "Tab") {
+      trapTab(open, e);
+    }
+  });
+
+  // 点遮罩关闭：必须是在遮罩上按下、又在遮罩上松开（防止在弹框里选文字拖到外面时误关）
+  function bindMaskClose(mask, closeFn) {
+    var downOnMask = false;
+    function down(e) { downOnMask = (e.target === mask); }
+    mask.addEventListener("mousedown", down);
+    mask.addEventListener("touchstart", down, { passive: true });
+    mask.addEventListener("click", function (e) {
+      if (downOnMask && e.target === mask) closeFn();
+      downOnMask = false;
+    });
+  }
+  bindMaskClose(delMask, closeDel);
+  bindMaskClose(impMask, closeImp);
+
+
+  // =====================================================
+  //   步骤 4.8：关闭黄色提示 / 备份提醒 / 存储空间 / 持久存储（新增）
+  // =====================================================
+
+  var BACKUP_SNOOZE_KEY = "petBackupSnooze_v1";   // "7 天后再提醒"：存的是"到什么时候之前不再提醒"（毫秒数）；不放进备份文件里
+  var BACKUP_REMIND_DAYS = 30;                    // 超过 30 天没导出，就提醒
+  var BACKUP_SNOOZE_DAYS = 7;                     // 点"7 天后再提醒"后，7 天内不再显示
+  var STORAGE_LIMIT_CHARS = 5 * 1024 * 1024;      // 浏览器本地存储的上限，大多数浏览器约 5MB（只是估算）
+  var backupBannerResultMode = false;             // 备份提醒条正在显示"导出成功"的结果
+
+  var backupBanner = document.getElementById("backupBanner");
+  var backupBannerText = document.getElementById("backupBannerText");
+  var backupBannerExport = document.getElementById("backupBannerExport");
+  var backupBannerLater = document.getElementById("backupBannerLater");
+
+  // ---------- 黄色提示条的"关闭" ----------
+  document.getElementById("corruptClose").addEventListener("click", function () {
+    corruptDismissed = true;
+    updateCorruptBanner();
+  });
+
+  // ---------- 该备份了的提醒 ----------
+  function loadSnooze() {
+    try {
+      var v = localStorage.getItem(BACKUP_SNOOZE_KEY);
+      var n = Number(v);
+      return (v !== null && isFinite(n) && n > 0) ? n : 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  function saveSnooze(ms) {
+    try { localStorage.setItem(BACKUP_SNOOZE_KEY, String(ms)); } catch (e) {}
+  }
+
+  // 要不要提醒、提醒什么；不需要提醒就返回空字符串
+  function backupReminderText() {
+    if (!hasAnyData()) return "";                       // 没有数据，没什么可备份的
+    if (Date.now() < loadSnooze()) return "";           // 点过"7 天后再提醒"，还在 7 天内
+    if (!lastBackupMs) {
+      return "你还没有导出过备份。数据只保存在这台设备的浏览器里，清除网站数据或换手机就会丢，建议现在导出一份。";
+    }
+    var d = new Date(lastBackupMs);
+    var days = todayNum() - dateNum(d.getFullYear(), d.getMonth() + 1, d.getDate());   // 按本地日期算"天"
+    if (days >= BACKUP_REMIND_DAYS) {
+      return "距离上次导出备份已经 " + days + " 天了，建议再导出一份，以防数据丢失。";
+    }
+    return "";
+  }
+
+  function updateBackupBanner() {
+    if (backupBannerResultMode) return;   // 正在显示"导出成功"，先别动
+    var text = backupReminderText();
+    if (!text) {
+      backupBanner.hidden = true;
+      return;
+    }
+    backupBannerText.textContent = text;
+    backupBannerExport.hidden = false;
+    backupBannerLater.textContent = BACKUP_SNOOZE_DAYS + " 天后再提醒";
+    backupBanner.hidden = false;
+  }
+
+  backupBannerExport.addEventListener("click", function () {
+    var r = doExport();
+    if (!r.ok) {
+      backupBannerText.textContent = r.msg;
+      return;
+    }
+    backupBannerResultMode = true;
+    backupBannerText.textContent = "✅ " + r.msg;
+    backupBannerExport.hidden = true;
+    backupBannerLater.textContent = "知道了";
+    backupBanner.hidden = false;
+  });
+
+  backupBannerLater.addEventListener("click", function () {
+    if (backupBannerResultMode) {
+      backupBannerResultMode = false;
+      updateBackupBanner();   // 刚导出过，这时会自动隐藏
+      return;
+    }
+    saveSnooze(Date.now() + BACKUP_SNOOZE_DAYS * 86400000);
+    backupBanner.hidden = true;
+  });
+
+  // 页面隔夜没关时，回到页面自动重新判断
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) updateBackupBanner();
+  });
+
+  // ---------- 存储空间显示 ----------
+  function ourStorageKeys() {
+    return [STORAGE_KEY, REMINDER_KEY, EXPENSE_KEY, WEIGHT_KEY, DIARY_KEY,
+            CAL_ASK_KEY, CAL_EXPORTED_KEY, LAST_BACKUP_KEY, BACKUP_SNOOZE_KEY];
+  }
+
+  // 只统计本应用自己的数据；返回 {total, diary}（单位：字符数，当作字节的估算）
+  function storageUsage() {
+    var total = 0, diary = 0;
+    try {
+      ourStorageKeys().forEach(function (k) {
+        var v = localStorage.getItem(k);
+        if (v === null) return;
+        var n = k.length + v.length;
+        total += n;
+        if (k === DIARY_KEY) diary += n;
+      });
+    } catch (e) {
+      return null;
+    }
+    return { total: total, diary: diary };
+  }
+
+  function fmtSize(n) {
+    if (n >= 1073741824) return (n / 1073741824).toFixed(1) + " GB";
+    if (n < 1048576) return Math.max(1, Math.round(n / 1024)) + " KB";
+    return (n / 1048576).toFixed(2) + " MB";
+  }
+
+  // 步骤 4.9：存储空间分三块显示——
+  //   1. 文字类数据（localStorage，上限约 5MB，进度条画的是这块）
+  //   2. 日记图片（IndexedDB，单独存放，空间大得多）
+  //   3. 浏览器分给本网站的总空间（浏览器的估算，不一定拿得到）
+  function updateStorageInfo() {
+    var textEl = document.getElementById("storageText");
+    var fill = document.getElementById("storageBarFill");
+    var imgEl = document.getElementById("imageStorageText");
+    var estEl = document.getElementById("estimateText");
+    if (!textEl || !fill) return;
+
+    var u = storageUsage();
+    if (!u) {
+      fill.style.width = "0";
+      textEl.textContent = "暂时读不出存储空间的用量。";
+    } else {
+      var pct = Math.min(100, u.total / STORAGE_LIMIT_CHARS * 100);
+      fill.style.width = pct.toFixed(1) + "%";
+      fill.className = pct >= 80 ? "warn" : "";
+      var t = "文字类数据（档案、开销、体重、日记文字等）已用约 " + fmtSize(u.total) + "，这块存储的上限一般约 5 MB（不同浏览器略有差别）。";
+      if (u.diary > 0) t += "其中日记约 " + fmtSize(u.diary) + "。";
+      if (pct >= 80) t += "快满了：请先导出备份，再删掉一些不需要的内容。";
+      textEl.textContent = t;
+    }
+
+    // 日记图片
+    var n = 0, bytes = 0;
+    diaries.forEach(function (d) {
+      if (d.store === "idb" && d.image) { n++; bytes += d.image.length; }
+    });
+    var imgText = "";
+    if (imagesState === "failed") {
+      imgText = "⚠️ 图片存储暂时不可用（可能是无痕模式或浏览器限制）：日记里的图片暂时显示不出来，也不能添加新图片。你的图片没有被删除。";
+    } else if (n > 0) {
+      imgText = "🖼️ 日记图片（单独存放，空间比上面那块大得多）：共 " + n + " 张，约 " + fmtSize(bytes) + "。";
+    }
+    imgEl.textContent = imgText;
+    imgEl.hidden = !imgText;
+
+    // 浏览器分给本网站的总空间（拿不到就不显示）
+    try {
+      if (navigator.storage && typeof navigator.storage.estimate === "function") {
+        navigator.storage.estimate().then(function (e) {
+          if (!e || !e.quota || typeof e.usage !== "number") { estEl.hidden = true; return; }
+          var p = e.usage / e.quota * 100;
+          var s = "浏览器分给本网站的总空间约 " + fmtSize(e.quota) + "，已用约 " + fmtSize(e.usage) + "（浏览器的估算，仅供参考）。";
+          if (p >= 80) s += "快满了：请先导出备份，再删掉一些图片。";
+          estEl.textContent = s;
+          estEl.hidden = false;
+        }).catch(function () { estEl.hidden = true; });
+      }
+    } catch (e2) {}
+  }
+
+  // ---------- 向浏览器申请"尽量别自动清理我的数据" ----------
+  var persistAsked = false;       // 这一次打开页面，只申请一次
+  var persistState = "idle";      // idle 还没申请 / yes 已获批 / no 没获批 / unsupported 不支持
+
+  function updatePersistInfo() {
+    var box = document.getElementById("persistText");
+    var msgs = {
+      yes: "🔒 浏览器已批准保护：存储空间紧张时，不会自动清理这些数据。（你手动清除网站数据，仍然会丢，请定期备份。）",
+      no: "⚠️ 浏览器没有批准保护：存储空间紧张时，数据可能被自动清理，请定期导出备份。",
+      unsupported: "这个浏览器不支持申请保护，请定期导出备份。",
+      idle: ""
+    };
+    var t = msgs[persistState] || "";
+    box.textContent = t;
+    box.hidden = !t;
+  }
+
+  function askPersistentStorage() {
+    if (persistAsked) return;
+    if (!hasAnyData()) return;      // 还没有数据，先不申请（有的浏览器会弹窗询问）
+    var s = null;
+    try { s = navigator.storage; } catch (e) {}
+    persistAsked = true;
+    if (!s || typeof s.persist !== "function") {
+      persistState = "unsupported";
+      updatePersistInfo();
+      return;
+    }
+    try {
+      var check = (typeof s.persisted === "function") ? s.persisted() : Promise.resolve(false);
+      check.then(function (already) {
+        return already ? true : s.persist();
+      }).then(function (granted) {
+        persistState = granted ? "yes" : "no";
+        updatePersistInfo();
+      }).catch(function () {
+        persistState = "no";
+        updatePersistInfo();
+      });
+    } catch (e) {
+      persistState = "no";
+      updatePersistInfo();
+    }
+  }
+
+
+  // =====================================================
+  //   步骤 4.9：日记图片改存 IndexedDB（新增）
+  // =====================================================
+  //
+  // IndexedDB 是浏览器自带的另一块存储，容量比 localStorage 大得多，而且能放图片这种大东西。
+  // 这里只用它存日记图片：库名 petAppDB_v1，里面一个叫 diaryImages 的仓库，
+  // 每张图片的"钥匙"就是它所属日记的 id，内容仍然是原来那串图片数据（和备份文件里的格式一样）。
+
+  var IDB_NAME = "petAppDB_v1";
+  var IDB_STORE = "diaryImages";
+  var idbPromise = null;
+
+  // 给一件要等待的事加个时限，免得一直卡住
+  function withTimeout(p, ms) {
+    return new Promise(function (resolve, reject) {
+      var t = setTimeout(function () { reject(new Error("timeout")); }, ms);
+      p.then(function (v) { clearTimeout(t); resolve(v); },
+             function (e) { clearTimeout(t); reject(e); });
+    });
+  }
+
+  // 打开图片存储（打开过就直接用上次的）
+  function idbOpen() {
+    if (idbPromise) return idbPromise;
+    var p = new Promise(function (resolve, reject) {
+      var req;
+      try {
+        if (!window.indexedDB) { reject(new Error("no indexedDB")); return; }
+        req = indexedDB.open(IDB_NAME, 1);
+      } catch (e) {
+        reject(e);
+        return;
+      }
+      req.onupgradeneeded = function () {
+        var db = req.result;
+        if (!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE);
+      };
+      req.onsuccess = function () {
+        var db = req.result;
+        db.onversionchange = function () { db.close(); idbPromise = null; };
+        resolve(db);
+      };
+      req.onerror = function () { reject(req.error || new Error("idb open error")); };
+      req.onblocked = function () { reject(new Error("idb blocked")); };
+    });
+    idbPromise = p;
+    p.catch(function () { if (idbPromise === p) idbPromise = null; });   // 失败了，下次再试
+    return p;
+  }
+
+  // 在一次"事务"里做一件事，等它完全做完才返回（事务要么全成功，要么全不改）
+  function idbRun(mode, fn) {
+    return idbOpen().then(function (db) {
+      return new Promise(function (resolve, reject) {
+        var tx, result;
+        try {
+          tx = db.transaction(IDB_STORE, mode);
+          var req = fn(tx.objectStore(IDB_STORE));
+          if (req) req.onsuccess = function () { result = req.result; };
+        } catch (e) {
+          reject(e);
+          return;
+        }
+        tx.oncomplete = function () { resolve(result); };
+        tx.onerror = function () { reject(tx.error || new Error("idb tx error")); };
+        tx.onabort = function () { reject(tx.error || new Error("idb tx abort")); };
+      });
+    });
+  }
+
+  function idbPut(key, value) { return idbRun("readwrite", function (s) { return s.put(value, key); }); }
+  function idbDelete(key) { return idbRun("readwrite", function (s) { return s["delete"](key); }); }
+  function idbClear() { return idbRun("readwrite", function (s) { return s.clear(); }); }
+
+  // 一次读出很多张：返回 {id: 图片数据}，读不到的 id 对应 undefined
+  function idbGetMany(keys) {
+    return idbOpen().then(function (db) {
+      return new Promise(function (resolve, reject) {
+        var out = Object.create(null);
+        var tx;
+        try {
+          tx = db.transaction(IDB_STORE, "readonly");
+          var store = tx.objectStore(IDB_STORE);
+          keys.forEach(function (k) {
+            var req = store.get(k);
+            req.onsuccess = function () { out[k] = req.result; };
+          });
+        } catch (e) {
+          reject(e);
+          return;
+        }
+        tx.oncomplete = function () { resolve(out); };
+        tx.onerror = function () { reject(tx.error || new Error("idb tx error")); };
+        tx.onabort = function () { reject(tx.error || new Error("idb tx abort")); };
+      });
+    });
+  }
+
+  // 一次写很多张（可以先清空）：items 是 [[id, 图片数据], ...]；一个事务，要么全成功，要么什么都不改
+  function idbWriteMany(items, clearFirst) {
+    return idbOpen().then(function (db) {
+      return new Promise(function (resolve, reject) {
+        var tx;
+        try {
+          tx = db.transaction(IDB_STORE, "readwrite");
+          var store = tx.objectStore(IDB_STORE);
+          if (clearFirst) store.clear();
+          items.forEach(function (it) { store.put(it[1], it[0]); });
+        } catch (e) {
+          reject(e);
+          return;
+        }
+        tx.oncomplete = function () { resolve(); };
+        tx.onerror = function () { reject(tx.error || new Error("idb tx error")); };
+        tx.onabort = function () { reject(tx.error || new Error("idb tx abort")); };
+      });
+    });
+  }
+
+  function idbReplaceAll(items) { return idbWriteMany(items, true); }
+
+  // 旧版把图片直接放在日记里（localStorage）。这里把它们搬进图片存储：
+  // 先全部写进去、再读回来逐张核对一模一样，确认没问题了，才把日记里的图片去掉。
+  // 任何一步出错，日记里的图片都原样留着，下次打开页面再试。
+  function migrateInlineImages() {
+    if (corrupt.diaries) return Promise.resolve(0);   // 日记数据有读取失败的部分时，不去动它（避免覆盖原始数据）
+    var list = diaries.filter(function (d) { return d.store === "inline" && d.image; });
+    if (!list.length) return Promise.resolve(0);
+    var items = list.map(function (d) { return [d.id, d.image]; });
+    return idbWriteMany(items, false).then(function () {
+      return idbGetMany(list.map(function (d) { return d.id; }));
+    }).then(function (got) {
+      for (var i = 0; i < list.length; i++) {
+        if (got[list[i].id] !== list[i].image) throw new Error("verify failed");
+      }
+      list.forEach(function (d) { d.store = "idb"; });
+      if (!saveDiaries()) {
+        list.forEach(function (d) { d.store = "inline"; });
+        throw new Error("localStorage save failed");
+      }
+      return list.length;
+    });
+  }
+
+  // 页面启动时：打开图片存储 → 搬走旧图片 → 把所有图片读进内存 → 再画一次日记页
+  function initDiaryImages() {
+    imagesState = "loading";
+    withTimeout(idbOpen(), 8000).then(function () {
+      return migrateInlineImages().catch(function () { return 0; });   // 搬家失败不影响继续用
+    }).then(function () {
+      var need = diaries.filter(function (d) { return d.store === "idb" && !d.image; });
+      if (!need.length) return null;
+      return idbGetMany(need.map(function (d) { return d.id; }));
+    }).then(function (got) {
+      var missing = 0;
+      if (got) {
+        diaries.forEach(function (d) {
+          if (d.store !== "idb" || d.image) return;
+          var v = got[d.id];
+          var ok = (typeof v === "string") ? checkDiaryImage(v) : null;
+          if (ok) d.image = ok;
+          else { d.imageMissing = true; missing++; }
+        });
+      }
+      imagesState = "ready";
+      if (missing) {
+        corrupt.diaries = true;       // 有图片读不到：和其他读取失败一样，顶部提示一下（不会自动删除任何东西）
+        updateCorruptBanner();
+      }
+    }).catch(function () {
+      imagesState = "failed";
+    }).then(function () {
+      imagesReady = true;
+      if (imagesState === "failed") {
+        diaryImageInput.disabled = true;
+        document.getElementById("diaryImageHint").textContent =
+          "图片存储暂时不可用（可能是无痕模式或浏览器限制），现在不能添加图片，日记文字不受影响。";
+      }
+      renderDiary();
+      updateStorageInfo();
+    });
+  }
+
+  // ---------- 启动 ----------
+  syncCalSwitch();
+  updateCorruptBanner();      // 步骤 4.6a：有读取失败的部分就显示顶部提示
+  updateLastBackupText();     // 步骤 4.6a：显示"上次导出"
+  showImportDoneIfAny();      // 步骤 4.6a：导入刷新后显示"导入完成"
+  render();
+  renderReminders();
+  renderExpenses();
+  renderWeights();
+  renderDiary();
+  updateBackupBanner();       // 步骤 4.8：该备份了就显示提醒
+  updateStorageInfo();        // 步骤 4.8：显示存储空间
+  askPersistentStorage();     // 步骤 4.8：有数据就向浏览器申请保护
+  initDiaryImages();          // 步骤 4.9：准备日记图片（搬走旧图片、读取图片）
+
+  // 步骤 4.10：刷新页面后，回到刷新之前所在的标签页。
+  // 记在 sessionStorage 里：刷新会保留；关掉这个浏览器标签页再重新打开，就回到"档案"。
+  // 它只是"现在看的是哪一页"，不是你的数据，所以不放进备份，也不算在存储空间里。
+  var TAB_KEY = "petCurrentTab_v1";
+  (function restoreTab() {
+    var name = null;
+    try { name = sessionStorage.getItem(TAB_KEY); } catch (e) {}
+    if (name === "reminder" || name === "expense" || name === "weight" || name === "diary") showTab(name);
+  })();
+</script>
+</body>
+</html>
